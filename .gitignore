@@ -1,0 +1,4 @@
+*.pyc
+imagenet_weights
+logs*
+
