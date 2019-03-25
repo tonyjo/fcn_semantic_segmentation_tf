@@ -19,7 +19,7 @@ global_step: 0
 start_step: 0
 epochs: 175
 summary_freq: 100
-testing_freq: 30
+testing_freq: 50
 l_rate_decay_epoch: 40
 l2: 0.0002
 l_rate: 0.0001
