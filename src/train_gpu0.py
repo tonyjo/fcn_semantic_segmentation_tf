@@ -33,7 +33,7 @@ flags.DEFINE_string("test_name",            config['test_name'],             "Te
 flags.DEFINE_integer('num_classes',         config['num_classes'],           "Total classes")
 flags.DEFINE_string("type1",                config['type1'],                 "Dataset type-- sbd/voc")
 flags.DEFINE_string("type2",                config['type2'],                 "Dataset type-- sbd/voc")
-flags.DEFINE_string("checkpoint_dir",       config['ckpt_dir'],              "Directory name to save the checkpoints")
+flags.DEFINE_string("checkpoint_dir",       config['ckpt_dir'],              "Dir to save the checkpoints")
 flags.DEFINE_bool("continue_train",         config['continue_train'],       "Continue Train")
 flags.DEFINE_string("init_checkpoint_file", config['init_checkpoint_file'],  "Checkpoint file")
 flags.DEFINE_string("logs_path",            config['log_dir'],               "Tensorboard log path")
@@ -48,6 +48,7 @@ flags.DEFINE_integer("summary_freq",        config['summary_freq'],          "Lo
 flags.DEFINE_integer("l_rate_decay_epoch",  config['l_rate_decay_epoch'],    "Learning rate decay epoch")
 flags.DEFINE_float("l2",                    config['l2'],                    "Weight Decay")
 flags.DEFINE_float("l_rate",                config['l_rate'],                "Learning Rate")
+flags.DEFINE_integer("print_every",         config['print_every'],           "Print Every n epochs")
 FLAGS = flags.FLAGS
 #-------------------------------------------------------------------------------
 def main(_):
@@ -78,8 +79,8 @@ def main(_):
     f.close()
 
     if FLAGS.train_model == 'model1':
-        pal = FCN32s(FLAGS)
-        pal.train()
+        fcn = FCN32s(FLAGS)
+        fcn.train()
 
 if __name__ == '__main__':
     tf.app.run()

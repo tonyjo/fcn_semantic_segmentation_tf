@@ -94,17 +94,52 @@ class FCN32s(object):
         self.train_op = train_op
         self.incr_glbl_stp = incr_glbl_stp
 
-    def pixel_acc(self, pred):
+    def build_test_graph(self, re_use=False):
+        opt = self.opt
+        # Input Pre-processing
+        with tf.name_scope('Input_preprocess'):
+            b, g, r = tf.split(self.images, 3, 3)
+            images_ = tf.concat([b - VGG_MEAN[0],\
+                                 g - VGG_MEAN[1],\
+                                 r - VGG_MEAN[2]], 3)
+            images_ = tf.pad(images_,  [[0, 0], [100, 100], [100, 100], [0, 0]],\
+                             mode='CONSTANT', name='Input_Pad', constant_values=0)
+        # VGG Model
+        vgg_net = VGG_ILSVRC_19_layer({'data': images_})
+        vgg_out = vgg_net.layers['drop7']
+        # Score Layer
+        with tf.variable_scope('score_fr'):
+            score_fr = slim.conv2d(vgg_out, opt.num_classes, [1, 1],
+                                   activation_fn=None,
+                                   padding='SAME',
+                                   weights_initializer=tf.zeros_initializer(),
+                                   stride=1, scope='score_fr')
+        # Upsample
+        with tf.variable_scope('upscore'):
+            upscore = slim.conv2d_transpose(score_fr, opt.num_classes, [64, 64], stride=32,
+                                  activation_fn=None, padding='SAME',
+                                  weights_initializer=bilinear_init,
+                                  biases_initializer=None,
+                                  trainable=False, scope='h_embdd_1_1')
+            upscore = upscore[:, 19: (19 + 224), 19: (19 + 224), :] # Crop to match input
+        # Assuming input image is float32
+        upscore = tf.reshape(upscore, (-1, opt.num_classes))
+        upscore = tf.nn.softmax(upscore)
+        upscore = tf.reshape(upscore, [tf.shape(self.images)[0], 224, 224, opt.num_classes])
+
+        self.vgg_net = vgg_net
+        self.upscore = upscore
+
+    def pixel_acc(self):
         opt = self.opt
         # Assuming input image is float32
-        upsc_rs = tf.reshape(self.upscore, (-1, opt.num_classes))
-        softmax = tf.nn.softmax(upsc_rs)
-        softmax = tf.reshape(softmax, [opt.batch_size, 244, 244, opt.num_classes])
-
+        upsc_rz = tf.reshape(self.upscore, (-1, opt.num_classes))
+        softmax = tf.nn.softmax(upsc_rz)
+        softmax = tf.reshape(softmax, [tf.shape(self.labels)[0], 224, 224, opt.num_classes])
         # Argmax input and predictions
-        preds  = tf.math.argmax(softmax,     axis=-1, output_type=tf.dtypes.int32)
-        labels = tf.math.argmax(self.labels, axis=-1, output_type=tf.dtypes.int32)
-
+        preds  = tf.argmax(softmax,     axis=-1, output_type=tf.int32)
+        labels = tf.argmax(self.labels, axis=-1, output_type=tf.int32)
+        # Pixel accuracy
         self.px_acc = tf.reduce_mean(tf.metrics.accuracy(labels=labels, predictions=preds))
 
     def deprocess_pred(self, pred):
@@ -112,9 +147,9 @@ class FCN32s(object):
         # Assuming input image is float32
         upsc_rs = tf.reshape(self.upscore, (-1, opt.num_classes))
         softmax = tf.nn.softmax(upsc_rs)
-        pred  = tf.reshape(softmax, [opt.batch_size, 244, 244, opt.num_classes])
-        pred  = tf.math.argmax(softmax, axis=-1, output_type=tf.dtypes.int32)
-        alpha = tf.image.convert_image_dtype(alpha, dtype=tf.uint8)
+        softmax = tf.reshape(softmax, [tf.shape(self.labels)[0], 224, 224, opt.num_classes])
+        predict =  tf.argmax(softmax, axis=-1, output_type=tf.int32)
+        alpha = tf.image.convert_image_dtype(predict, dtype=tf.uint8)
         alpha = tf.image.resize_images(alpha, (100, 100), method=ResizeMethod.NEAREST_NEIGHBOR)
 
         return alpha
@@ -146,6 +181,7 @@ class FCN32s(object):
 
         # Build graph
         self.build_train_graph(l_rate_decay_step=l_rate_decay_step)
+        self.pixel_acc()
 
         # Setup loss scalars
         tf.summary.scalar("Loss", self.loss)
@@ -159,15 +195,16 @@ class FCN32s(object):
         config = tf.GPUOptions(allow_growth=True)
 
         # To save model
-        init  = tf.global_variables_initializer()
-        saver = tf.train.Saver(max_to_keep=5)
+        init_op = tf.group(tf.global_variables_initializer(),\
+                           tf.local_variables_initializer())
+        saver   = tf.train.Saver(max_to_keep=5)
 
         with tf.Session(config=tf.ConfigProto(gpu_options=config)) as sess:
             # create log writer object
             writer = tf.summary.FileWriter(opt.logs_path, graph=sess.graph)
 
             # Intialize the graph
-            sess.run(init)
+            sess.run(init_op)
 
             # Load the pre-trainined googlenet weights
             self.vgg_net.load('./imagenet_weights/vgg19.npy', sess)
@@ -178,7 +215,7 @@ class FCN32s(object):
                 if opt.init_checkpoint_file is None:
                     print('Enter a valid checkpoint file')
                 else:
-                    load_model = os.path.join(checkpoint_dir_path, opt.init_checkpoint_file)
+                    load_model = os.path.join(ckpt_dir_path, opt.init_checkpoint_file)
                     saver.restore(sess, load_model)
                     sess.run(tf.assign(self.global_step, opt.global_step))
                     print("Resume training from previous checkpoint: %s" % opt.init_checkpoint_file)
@@ -201,8 +238,8 @@ class FCN32s(object):
                         # Print global step
                         run_global_step = sess.run([self.global_step])
                         # Estimate loss at global time step
-                        np_loss, interm_loss = sess.run([self.loss, summary_op], feed_dict=feed)
-                        print('Global Step:' + str(run_global_step) + "\n\t" + "Loss is: " + str(np_loss))
+                        interm_loss = sess.run(summary_op, feed_dict=feed)
+                        print('Global Step:' + str(run_global_step))
                         # Write log
                         writer.add_summary(interm_loss, i)
                         # Validation Accuracy
@@ -211,13 +248,14 @@ class FCN32s(object):
                         total_steps = test_loader.max_steps//opt.test_batch_size
                         for j in range(total_steps):
                             val_images, val_labels = next(test_gen)
-                            feed = {self.images: image_batch,
-                                    self.labels: label_batch,
+                            feed = {self.images: val_images,
+                                    self.labels: val_labels,
                                     self.vgg_net.keep_prob: 1.0}
-                            accuracy   = sess.run(self.px_acc, feed_dict=feed)
-                            total_acc += accuracy
+                            acc = sess.run(self.px_acc, feed_dict=feed)
+                            total_acc += acc
                         # Final accuracy
-                        final_accuracy = total_acc/total_steps
+                        final_accuracy = (total_acc/total_steps) * 100
+                        print('Pixel Accuracy: ', final_accuracy)
                         # Save
                         if final_accuracy > best_acc:
                             best_acc  = final_accuracy
@@ -226,5 +264,5 @@ class FCN32s(object):
                             saver.save(sess, checkpoint_path)
                             print("Intermediate file saved")
 
-                if i%self.print_every == 0:
+                if i%opt.print_every == 0:
                     print('Epoch Completion..{%d/%d} and loss = %d' % (i, n_iters_per_epoch, curr_loss))

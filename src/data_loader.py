@@ -114,6 +114,7 @@ class dataLoader(object):
                         image_file = os.path.join(self.directory, 'img', str(self.images[idx] + '.jpg'))
                         image = cv2.imread(image_file)
                         image = cv2.resize(image, (256, 256), interpolation=cv2.INTER_NEAREST)
+                        # Get label
                         label = self.load_label(idx=self.images[idx])
                         # Resize label
                         label = cv2.resize(label, (256, 256), interpolation=cv2.INTER_NEAREST)
@@ -154,7 +155,7 @@ class dataLoader(object):
                         # Get label
                         label = self.load_label(idx=self.images[idx])
                         # Resize label
-                        label = cv2.resize(image, (self.image_width, self.image_height), interpolation=cv2.INTER_NEAREST)
+                        label = cv2.resize(label, (self.image_width, self.image_height), interpolation=cv2.INTER_NEAREST)
                         label = self.convert_from_value_segmentation(arr_2d=label)
                     else:
                         # Get image
