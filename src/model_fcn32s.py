@@ -145,13 +145,13 @@ class FCN32s(object):
     def deprocess_pred(self, pred):
         opt = self.opt
         # Assuming input image is float32
-        upsc_rs = tf.reshape(self.upscore, (-1, opt.num_classes))
+        upsc_rs = tf.reshape(pred, (-1, opt.num_classes))
         softmax = tf.nn.softmax(upsc_rs)
         softmax = tf.reshape(softmax, [tf.shape(self.labels)[0], 224, 224, opt.num_classes])
         predict = tf.argmax(softmax, axis=-1, output_type=tf.int32)
-        alpha   = colorize(value=predict, name='pred_to_image', opt=opt)
-        alpha   = tf.image.convert_image_dtype(predict, dtype=tf.uint8)
-        alpha   = tf.image.resize_images(alpha, (100, 100), method=ResizeMethod.NEAREST_NEIGHBOR)
+        alpha   = colorize(value=predict, name='pred_to_image')
+        alpha   = tf.image.convert_image_dtype(alpha, dtype=tf.uint8)
+        alpha   = tf.image.resize_images(alpha, (100, 100), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
 
         return alpha
 

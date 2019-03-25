@@ -104,20 +104,18 @@ def colorize_semantic_seg(pred):
     """
     out = []
     for i in range(pred.shape[0]):
-        img = convert_from_segmentation_color(arr_2d=pred[i])
+        img = convert_from_segmentation_color(arr_2d=pred[i, :, :])
 
         out.append(img)
 
     return np.float32(np.uint8(out))
 
-def colorize(value, name='pred_to_image', opt):
+def colorize(value, name='pred_to_image'):
     """
-    A utility function for TensorFlow that maps a grayscale image to a matplotlib
-    colormap for use with TensorBoard image summaries.
+    A utility function for TensorFlow that maps prediction to segmentation color map
     """
     with tf.variable_scope(name), tf.device('/cpu:0'):
         img = tf.py_func(colorize_semantic_seg, [value], tf.float32, stateful=False)
-        img.set_shape(value.get_shape().as_list()[0:-1]+[3])
-        value = value / 127.5 - 1.
-
+        img.set_shape(value.get_shape().as_list() + [3])
+        print(img.get_shape())
         return img
