@@ -32,6 +32,45 @@ def palette():
 
     return palette
 
+def rev_pascal_palette():
+    palette = { 0: (  0,   0,   0),
+                1: (128,   0,   0),
+                2: (  0, 128,   0),
+                3: (128, 128,   0),
+                4: (  0,   0, 128),
+                5: (128,   0, 128),
+                6: (  0, 128, 128),
+                7: (128, 128, 128),
+                8: ( 64,   0,   0),
+                9: (192,   0,   0),
+                10: ( 64, 128,   0),
+                11: (192, 128,   0),
+                12: ( 64,   0, 128),
+                13: (192,   0, 128),
+                14: ( 64, 128, 128),
+                15: (192, 128, 128),
+                16: (  0,  64,   0),
+                17: (128,  64,   0),
+                18: (  0, 192,   0),
+                19: (128, 192,   0),
+                20: (  0,  64, 128)}
+
+    return palette
+
+def convert_from_segmentation_color(arr_2d):
+    '''
+    Function for converting Labels into RGB
+    '''
+    arr_3d  = np.zeros((arr_2d.shape[0], arr_2d.shape[1], 3), dtype=np.uint8)
+    palette = rev_pascal_palette()
+    # slow!
+    for i in range(0, arr_2d.shape[0]):
+        for j in range(0, arr_2d.shape[1]):
+            key = arr_2d[i,j]
+            arr_3d[i,j,:] = palette.get(key, 0) # default value if key was not found is 0
+
+    return arr_3d
+
 def upsample_filt(size):
     """
     Make a 2D bilinear kernel suitable for upsampling of the given (h, w) size.
@@ -64,28 +103,20 @@ def colorize_semantic_seg(pred):
     Convert prediction labels to color image using PASCAL-VOC pallete.
     """
     out = []
-    s   = pred.shape
     for i in range(pred.shape[0]):
-        img = np.ones((s[1], s[2], 3))
+        img = convert_from_segmentation_color(arr_2d=pred[i])
 
-        for h in range(s[1]):
-            for w in range(s[1]):
-                ui = u[h,w]
-                vi = v[h,w]
-
-                img[ui, vi, :] = 255.
         out.append(img)
 
     return np.float32(np.uint8(out))
 
-def colorize(value, name='pred_to_image'):
+def colorize(value, name='pred_to_image', opt):
     """
     A utility function for TensorFlow that maps a grayscale image to a matplotlib
     colormap for use with TensorBoard image summaries.
     """
-
     with tf.variable_scope(name), tf.device('/cpu:0'):
-        img = tf.py_func(flow_to_image, [value], tf.float32, stateful=False)
+        img = tf.py_func(colorize_semantic_seg, [value], tf.float32, stateful=False)
         img.set_shape(value.get_shape().as_list()[0:-1]+[3])
         value = value / 127.5 - 1.
 

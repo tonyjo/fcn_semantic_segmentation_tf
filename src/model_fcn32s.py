@@ -148,9 +148,10 @@ class FCN32s(object):
         upsc_rs = tf.reshape(self.upscore, (-1, opt.num_classes))
         softmax = tf.nn.softmax(upsc_rs)
         softmax = tf.reshape(softmax, [tf.shape(self.labels)[0], 224, 224, opt.num_classes])
-        predict =  tf.argmax(softmax, axis=-1, output_type=tf.int32)
-        alpha = tf.image.convert_image_dtype(predict, dtype=tf.uint8)
-        alpha = tf.image.resize_images(alpha, (100, 100), method=ResizeMethod.NEAREST_NEIGHBOR)
+        predict = tf.argmax(softmax, axis=-1, output_type=tf.int32)
+        alpha   = colorize(value=predict, name='pred_to_image', opt=opt)
+        alpha   = tf.image.convert_image_dtype(predict, dtype=tf.uint8)
+        alpha   = tf.image.resize_images(alpha, (100, 100), method=ResizeMethod.NEAREST_NEIGHBOR)
 
         return alpha
 
@@ -186,7 +187,8 @@ class FCN32s(object):
         # Setup loss scalars
         tf.summary.scalar("Loss", self.loss)
         # Predictions
-        #tf.summary.image("Prediction ", self.deprocess_pred(self.alphas[i]), max_outputs=4)
+        tf.summary.image("Ground_truth", self.deprocess_pred(self.labels), max_outputs=4)
+        tf.summary.image("Prediction",   self.deprocess_pred(self.upscore), max_outputs=4)
 
         # Merge all summaries into a single "operation"
         summary_op = tf.summary.merge_all()
@@ -221,6 +223,7 @@ class FCN32s(object):
                     print("Resume training from previous checkpoint: %s" % opt.init_checkpoint_file)
 
             # Begin training
+            step = 0
             for epoch in range(opt.epochs):
                 print('Epoch {}/{}'.format(epoch, opt.epochs))
                 print('-' * 10)
@@ -233,7 +236,9 @@ class FCN32s(object):
 
                     _, l, _ = sess.run([self.train_op, self.loss, self.incr_glbl_stp], feed_dict=feed)
                     curr_loss += l
-
+                    # Increment step
+                    step += 1
+                    # Run test
                     if i % opt.summary_freq == 0:
                         # Print global step
                         run_global_step = sess.run([self.global_step])
@@ -241,7 +246,7 @@ class FCN32s(object):
                         interm_loss = sess.run(summary_op, feed_dict=feed)
                         print('Global Step:' + str(run_global_step))
                         # Write log
-                        writer.add_summary(interm_loss, i)
+                        writer.add_summary(interm_loss, step)
                         # Validation Accuracy
                         print('Estimating Testing Accuracy....')
                         total_acc = 0.0
@@ -259,7 +264,7 @@ class FCN32s(object):
                         # Save
                         if final_accuracy > best_acc:
                             best_acc  = final_accuracy
-                            model_name = 'fcn32s_bp_' + str(i)
+                            model_name = 'fcn32s_bp_' + str(step)
                             checkpoint_path = os.path.join(ckpt_dir_path, model_name)
                             saver.save(sess, checkpoint_path)
                             print("Intermediate file saved")
