@@ -40,7 +40,7 @@ class FCN32s(object):
             score_fr = slim.conv2d(vgg_out, opt.num_classes, [1, 1],
                                    activation_fn=None,
                                    padding='SAME',
-                                   weights_initializer=tf.contrib.layers.variance_scaling_initializer(mode='FAN_IN'),
+                                   weights_initializer=tf.zeros_initializer(),
                                    stride=1, scope='score_fr')
         # Upsample
         with tf.variable_scope('upscore'):
@@ -52,12 +52,13 @@ class FCN32s(object):
             upscore = upscore[:, 19: (19 + 224), 19: (19 + 224), :] # Crop to match input
         #-------------------------------------------------------------------
         # Softmax-Cross entropy Loss
-        upsc_rs = tf.reshape(upscore, (-1, opt.num_classes))
-        softmax = tf.nn.softmax(upsc_rs)
-        loss    = -tf.reduce_sum(labels * tf.log(softmax), reduction_indices=[1])
+        upsc_rz = tf.reshape(upscore, (-1, opt.num_classes))
+        labl_rz = tf.reshape(self.labels, (-1, opt.num_classes))
+        softmax = tf.nn.softmax(upsc_rz) + 0.0001
+        loss    = -tf.reduce_sum(labl_rz * tf.log(softmax), reduction_indices=[1])
         loss    = tf.reduce_mean(loss, name='loss_mean')
         #-----------------------------------------------------------------------
-        # L2 regularization
+        # Weight Decay
         # Add l2-loss for weights only and ignore bias and temperature variables
         if opt.l2 > 0:
             print('L2 regularization:')
@@ -92,6 +93,7 @@ class FCN32s(object):
         self.train_op = train_op
         self.incr_glbl_stp = incr_glbl_stp
 
+    def pixela_acc(self, pred)
     def deprocess_pred(self, pred):
         opt = self.opt
         # Assuming input image is float32
