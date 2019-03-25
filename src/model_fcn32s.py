@@ -187,7 +187,7 @@ class FCN32s(object):
         # Setup loss scalars
         tf.summary.scalar("Loss", self.loss)
         # Predictions
-        tf.summary.image("Ground_truth", self.deprocess_pred(self.labels), max_outputs=4)
+        tf.summary.image("Ground_truth", self.deprocess_pred(self.labels),  max_outputs=4)
         tf.summary.image("Prediction",   self.deprocess_pred(self.upscore), max_outputs=4)
 
         # Merge all summaries into a single "operation"
@@ -226,7 +226,7 @@ class FCN32s(object):
             step = 0
             for epoch in range(opt.epochs):
                 print('Epoch {}/{}'.format(epoch, opt.epochs))
-                print('-' * 10)
+                print('-' * 20)
                 curr_loss = 0.0
                 for i in range(n_iters_per_epoch):
                     image_batch, label_batch = next(train_gen)
@@ -238,7 +238,7 @@ class FCN32s(object):
                     curr_loss += l
                     # Increment step
                     step += 1
-                    # Run test
+                    # Run logs
                     if i % opt.summary_freq == 0:
                         # Print global step
                         run_global_step = sess.run([self.global_step])
@@ -247,6 +247,8 @@ class FCN32s(object):
                         print('Global Step:' + str(run_global_step))
                         # Write log
                         writer.add_summary(interm_loss, step)
+                    # Run testing
+                    if i % opt.testing_freq == 0:
                         # Validation Accuracy
                         print('Estimating Testing Accuracy....')
                         total_acc = 0.0
@@ -270,4 +272,4 @@ class FCN32s(object):
                             print("Intermediate file saved")
 
                 if i%opt.print_every == 0:
-                    print('Epoch Completion..{%d/%d} and loss = %d' % (i, n_iters_per_epoch, curr_loss))
+                    print('Epoch Completion..{%d/%d} and loss = %d' % (i, n_iters_per_epoch, curr_loss/n_iters_per_epoch))

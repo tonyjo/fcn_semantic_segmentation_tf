@@ -45,6 +45,7 @@ flags.DEFINE_integer("global_step",         config['global_step'],           "St
 flags.DEFINE_integer("start_step",          config['start_step'],            "Starting training step")
 flags.DEFINE_integer("epochs",              config['epochs'],                "Maximum number of epochs")
 flags.DEFINE_integer("summary_freq",        config['summary_freq'],          "Logging every log_freq iterations")
+flags.DEFINE_integer("testing_freq",        config['testing_freq'],          "Testing interation steps")
 flags.DEFINE_integer("l_rate_decay_epoch",  config['l_rate_decay_epoch'],    "Learning rate decay epoch")
 flags.DEFINE_float("l2",                    config['l2'],                    "Weight Decay")
 flags.DEFINE_float("l_rate",                config['l_rate'],                "Learning Rate")
