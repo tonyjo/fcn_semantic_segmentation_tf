@@ -5,8 +5,7 @@ import random
 import numpy as np
 import tensorflow as tf
 from data_loader import dataLoader
-from vgg19 import VGG_ILSVRC_19_layer as vgg19_train
-from vgg19_inference import VGG_ILSVRC_19_layer as vgg19_test
+from vgg19 import VGG_ILSVRC_19_layer
 from utils import *
 slim = tf.contrib.slim
 # Init values
@@ -24,6 +23,7 @@ class FCN32s(object):
         self.global_step = tf.Variable(0, dtype=tf.float32, trainable=False)
 
     def build_train_graph(self, l_rate_decay_step, re_use=False):
+        opt = self.opt
         # Input Pre-processing
         with tf.name_scope('Input_preprocess'):
             b, g, r = tf.split(self.images, 3, 3)
@@ -33,7 +33,7 @@ class FCN32s(object):
             images_ = tf.pad(images_,  [[0, 0], [100, 100], [100, 100], [0, 0]],\
                              mode='CONSTANT', name='Input_Pad', constant_values=0)
         # VGG Model
-        vgg_net = vgg19_train({'data': images_})
+        vgg_net = VGG_ILSVRC_19_layer({'data': images_})
         vgg_out = vgg_net.layers['drop7']
         # Score Layer
         with tf.variable_scope('score_fr'):
@@ -52,7 +52,7 @@ class FCN32s(object):
             upscore = upscore[:, 19: (19 + 224), 19: (19 + 224), :] # Crop to match input
         #-------------------------------------------------------------------
         # Softmax-Cross entropy Loss
-        upsc_rz = tf.reshape(upscore, (-1, opt.num_classes))
+        upsc_rz = tf.reshape(upscore,     (-1, opt.num_classes))
         labl_rz = tf.reshape(self.labels, (-1, opt.num_classes))
         softmax = tf.nn.softmax(upsc_rz) + 0.0001
         loss    = -tf.reduce_sum(labl_rz * tf.log(softmax), reduction_indices=[1])
@@ -88,12 +88,25 @@ class FCN32s(object):
         # Get the gradients
         train_op = optim.minimize(loss, var_list=tf.trainable_variables())
 
+        self.loss     = loss
         self.upscore  = upscore
         self.vgg_net  = vgg_net
         self.train_op = train_op
         self.incr_glbl_stp = incr_glbl_stp
 
-    def pixela_acc(self, pred)
+    def pixel_acc(self, pred):
+        opt = self.opt
+        # Assuming input image is float32
+        upsc_rs = tf.reshape(self.upscore, (-1, opt.num_classes))
+        softmax = tf.nn.softmax(upsc_rs)
+        softmax = tf.reshape(softmax, [opt.batch_size, 244, 244, opt.num_classes])
+
+        # Argmax input and predictions
+        preds  = tf.math.argmax(softmax,     axis=-1, output_type=tf.dtypes.int32)
+        labels = tf.math.argmax(self.labels, axis=-1, output_type=tf.dtypes.int32)
+
+        self.px_acc = tf.reduce_mean(tf.metrics.accuracy(labels=labels, predictions=preds))
+
     def deprocess_pred(self, pred):
         opt = self.opt
         # Assuming input image is float32
@@ -109,45 +122,35 @@ class FCN32s(object):
     def train(self):
         opt = self.opt
         # Some large value
-        best_pred = 0.0
-
-        # Get Loss
-        train_loss = []
-        test_loss  = []
+        best_acc = 0.0
 
         # Checkpoint_path
         ckpt_dir_path = os.path.join(opt.exp_dir, opt.dataset_name, opt.checkpoint_dir)
 
         # Train Data Loader
-        train_loader = dataLoader(opt.dataset_dir, opt.train_name, 224, 224,
-                                  mode='Train', dtype=opt.type)
+        train_loader = dataLoader(opt.train_dataset_dir, opt.train_name, 224, 224,
+                                  mode='Train', dtype=opt.type1)
         train_gen    = train_loader.gen_data_batch(batch_size=opt.batch_size)
-        # Val Data Loader
-        val_loader   = dataLoader(opt.dataset_dir, opt.val_name, 224, 224,
-                                  mode='Test', dtype=opt.type)
-        val_gen      = val_loader.gen_data_batch(batch_size=opt.vald_batch_size)
         # Test Data Loader
-        test_loader  = dataLoader(opt.dataset_dir, opt.test_name, 224, 224,
-                                  mode='Test', dtype=opt.type)
+        test_loader  = dataLoader(opt.test_dataset_dir, opt.test_name, 224, 224,
+                                  mode='Test', dtype=opt.type2)
         test_gen     = test_loader.gen_data_batch(batch_size=opt.test_batch_size)
 
         # Compute steps
         n_examples        = train_loader.max_steps
         n_iters_per_epoch = int(np.ceil(float(n_examples)/opt.batch_size))
         training_steps    = int(opt.epochs             * n_iters_per_epoch)
-        decay_step        = int(opt.temperature_decay  * n_iters_per_epoch)
         l_rate_decay_step = int(opt.l_rate_decay_epoch * n_iters_per_epoch)
         print('Total Training Steps: ', training_steps)
-        print('Temperature decay step: ', decay_step)
         print('Learning rate decay step: ', l_rate_decay_step)
 
         # Build graph
-        self.build_train_graph_gnet(l_rate_decay_step=l_rate_decay_step)
+        self.build_train_graph(l_rate_decay_step=l_rate_decay_step)
 
         # Setup loss scalars
         tf.summary.scalar("Loss", self.loss)
         # Predictions
-        tf.summary.image("Prediction ", self.deprocess_pred(self.alphas[i]), max_outputs=4)
+        #tf.summary.image("Prediction ", self.deprocess_pred(self.alphas[i]), max_outputs=4)
 
         # Merge all summaries into a single "operation"
         summary_op = tf.summary.merge_all()
@@ -180,14 +183,47 @@ class FCN32s(object):
                     sess.run(tf.assign(self.global_step, opt.global_step))
                     print("Resume training from previous checkpoint: %s" % opt.init_checkpoint_file)
 
-            if median_result[0] > best_pred:
-                best_pred  = median_result[0]
-                model_name = 'posenet_bp_' + str(i)
-                checkpoint_path = os.path.join(ckpt_dir_path, model_name)
-                saver.save(sess, checkpoint_path)
-                print("Intermediate file saved")
-                sw_path = os.path.join(ckpt_dir_path, model_name + '_sw.npy')
-                switch_values = np.array(switch_values)
-                print(switch_values.shape)
-                np.save(sw_path, switch_values)
-                print("Switch Values saved!")
+            # Begin training
+            for epoch in range(self.n_epochs):
+                print('Epoch {}/{}'.format(epoch, self.n_epochs))
+                print('-' * 10)
+                for i in range(n_iters_per_epoch):
+                    image_batch, label_batch = next(train_loader)
+                    feed_dict = {self.images: image_batch,
+                                 self.labels: label_batch,
+                                 self.vgg_net.keep_prob: 0.5}
+
+                    _, l, _ = sess.run([self.train_op, self.loss, self.incr_glbl_stp], feed_dict)
+                    curr_loss += l
+
+                    if i % opt.summary_freq == 0:
+                        # Print global step
+                        run_global_step = sess.run([self.global_step])
+                        # Estimate loss at global time step
+                        np_loss, interm_loss = sess.run([self.loss, summary_op], feed_dict=feed)
+                        print('Global Step:' + str(run_global_step) + "\n\t" + "Loss is: " + str(np_loss))
+                        # Write log
+                        writer.add_summary(interm_loss, i)
+                        # Validation Accuracy
+                        print('Estimating Testing Accuracy....')
+                        total_acc = 0.0
+                        total_steps = test_loader.max_steps//opt.test_batch_size
+                        for j in range(total_steps):
+                            val_images, val_labels = next(test_gen)
+                            feed_dict = {self.images: image_batch,
+                                         self.labels: label_batch,
+                                         self.vgg_net.keep_prob: 1.0}
+                            accuracy   = sess.run(self.px_acc, feed_dict=feed)
+                            total_acc += accuracy
+                        # Final accuracy
+                        final_accuracy = total_acc/total_steps
+                        # Save
+                        if final_accuracy > best_acc:
+                            best_acc  = final_accuracy
+                            model_name = 'fcn32s_bp_' + str(i)
+                            checkpoint_path = os.path.join(ckpt_dir_path, model_name)
+                            saver.save(sess, checkpoint_path)
+                            print("Intermediate file saved")
+
+                if i%self.print_every == 0:
+                    print('Epoch Completion..{%d/%d}' % (i, n_iters_per_epoch))
