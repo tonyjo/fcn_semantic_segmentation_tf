@@ -1,7 +1,7 @@
 dataset_name: pascal_voc
 exp_dir: ./experiments
-train_dataset_dir: /4tb/tony_datasets/sbd_dataset
-test_dataset_dir: /4tb/tony_datasets/sbd_dataset
+train_dataset_dir: /home/tony/Documents/datasets/sbd_dataset
+test_dataset_dir: /home/tony/Documents/datasets/sbd_dataset
 train_name: train1.txt
 test_name: train1.txt
 num_classes: 21
@@ -9,7 +9,9 @@ type1: sbd
 type2: sbd
 train_model: model1
 ckpt_dir: checkpoint1
+continue_train: False
 init_checkpoint_file: None
+log_dir: logs1
 batch_size: 1
 test_batch_size: 1
 train_model: model1

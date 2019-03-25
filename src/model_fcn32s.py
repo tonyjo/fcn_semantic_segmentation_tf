@@ -170,7 +170,7 @@ class FCN32s(object):
             sess.run(init)
 
             # Load the pre-trainined googlenet weights
-            self.vgg_net.load('./googlenet_weights/googlenet_places.npy', sess)
+            self.vgg_net.load('./imagenet_weights/vgg19.npy', sess)
             print('Pre-trainined Googlenet weights loaded')
 
             # Check if training has to be continued
@@ -184,16 +184,17 @@ class FCN32s(object):
                     print("Resume training from previous checkpoint: %s" % opt.init_checkpoint_file)
 
             # Begin training
-            for epoch in range(self.n_epochs):
-                print('Epoch {}/{}'.format(epoch, self.n_epochs))
+            for epoch in range(opt.epochs):
+                print('Epoch {}/{}'.format(epoch, opt.epochs))
                 print('-' * 10)
+                curr_loss = 0.0
                 for i in range(n_iters_per_epoch):
-                    image_batch, label_batch = next(train_loader)
-                    feed_dict = {self.images: image_batch,
-                                 self.labels: label_batch,
-                                 self.vgg_net.keep_prob: 0.5}
+                    image_batch, label_batch = next(train_gen)
+                    feed = {self.images: image_batch,
+                            self.labels: label_batch,
+                            self.vgg_net.keep_prob: 0.5}
 
-                    _, l, _ = sess.run([self.train_op, self.loss, self.incr_glbl_stp], feed_dict)
+                    _, l, _ = sess.run([self.train_op, self.loss, self.incr_glbl_stp], feed_dict=feed)
                     curr_loss += l
 
                     if i % opt.summary_freq == 0:
@@ -210,9 +211,9 @@ class FCN32s(object):
                         total_steps = test_loader.max_steps//opt.test_batch_size
                         for j in range(total_steps):
                             val_images, val_labels = next(test_gen)
-                            feed_dict = {self.images: image_batch,
-                                         self.labels: label_batch,
-                                         self.vgg_net.keep_prob: 1.0}
+                            feed = {self.images: image_batch,
+                                    self.labels: label_batch,
+                                    self.vgg_net.keep_prob: 1.0}
                             accuracy   = sess.run(self.px_acc, feed_dict=feed)
                             total_acc += accuracy
                         # Final accuracy
@@ -226,4 +227,4 @@ class FCN32s(object):
                             print("Intermediate file saved")
 
                 if i%self.print_every == 0:
-                    print('Epoch Completion..{%d/%d}' % (i, n_iters_per_epoch))
+                    print('Epoch Completion..{%d/%d} and loss = %d' % (i, n_iters_per_epoch, curr_loss))
