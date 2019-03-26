@@ -210,7 +210,7 @@ class FCN32s(object):
 
             # Load the pre-trainined googlenet weights
             self.vgg_net.load('./imagenet_weights/vgg19.npy', sess)
-            print('Pre-trainined Googlenet weights loaded')
+            print('Pre-trainined VGG weights loaded')
 
             # Check if training has to be continued
             if opt.continue_train:

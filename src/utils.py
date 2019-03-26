@@ -105,7 +105,6 @@ def colorize_semantic_seg(pred):
     out = []
     for i in range(pred.shape[0]):
         img = convert_from_segmentation_color(arr_2d=pred[i, :, :])
-
         out.append(img)
 
     return np.float32(np.uint8(out))
@@ -117,5 +116,5 @@ def colorize(value, name='pred_to_image'):
     with tf.variable_scope(name), tf.device('/cpu:0'):
         img = tf.py_func(colorize_semantic_seg, [value], tf.float32, stateful=False)
         img.set_shape(value.get_shape().as_list() + [3])
-        print(img.get_shape())
+
         return img
