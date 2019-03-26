@@ -7,7 +7,7 @@
  [[Category list](http://host.robots.ox.ac.uk/pascal/VOC/voc2012/segexamples/index.html)] <br>
 
 ## Segmentation Categories
-[[Class list](fcn_semantic_segmentation_tf/seg_class)]
+[[Class list](seg_class)]
  
  
 ## Network
