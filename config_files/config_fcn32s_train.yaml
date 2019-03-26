@@ -17,7 +17,7 @@ test_batch_size: 5
 train_model: model1
 global_step: 0
 start_step: 0
-epochs: 200
+epochs: 175
 summary_freq: 100
 testing_freq: 4000
 l_rate_decay_epoch: 40

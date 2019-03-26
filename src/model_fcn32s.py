@@ -33,7 +33,7 @@ class FCN32s(object):
             images_ = tf.pad(images_,  [[0, 0], [100, 100], [100, 100], [0, 0]],\
                              mode='CONSTANT', name='Input_Pad', constant_values=0)
         # VGG Model
-        vgg_net = VGG_ILSVRC_19_layer({'data': images_})
+        vgg_net = VGG_ILSVRC_16_layers({'data': images_})
         vgg_out = vgg_net.layers['VGG/drop7']
         # Score Layer
         with tf.variable_scope('score_fr'):
@@ -209,7 +209,7 @@ class FCN32s(object):
             sess.run(init_op)
 
             # Load the pre-trainined googlenet weights
-            self.vgg_net.load('./imagenet_weights/vgg19.npy', sess)
+            self.vgg_net.load('./imagenet_weights/vgg16.npy', sess)
             print('Pre-trainined VGG weights loaded')
 
             # Check if training has to be continued
