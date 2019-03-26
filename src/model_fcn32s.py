@@ -54,8 +54,8 @@ class FCN32s(object):
         # Softmax-Cross entropy Loss
         upsc_rz = tf.reshape(upscore,     (-1, opt.num_classes))
         labl_rz = tf.reshape(self.labels, (-1, opt.num_classes))
-        loss    = tf.nn.softmax_cross_entropy_with_logits(logits=flat_logits,
-                                                          labels=flat_labels)
+        loss    = tf.nn.softmax_cross_entropy_with_logits(logits=upsc_rz,
+                                                          labels=labl_rz)
         loss    = tf.reduce_mean(loss, name='loss_mean')
         #-----------------------------------------------------------------------
         # Weight Decay
@@ -273,3 +273,4 @@ class FCN32s(object):
 
                 if i%opt.print_every == 0:
                     print('Epoch Completion..{%d/%d} and loss = %d' % (i, n_iters_per_epoch, curr_loss/n_iters_per_epoch))
+
