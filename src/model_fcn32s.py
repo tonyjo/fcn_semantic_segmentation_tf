@@ -34,7 +34,7 @@ class FCN32s(object):
                              mode='CONSTANT', name='Input_Pad', constant_values=0)
         # VGG Model
         vgg_net = VGG_ILSVRC_19_layer({'data': images_})
-        vgg_out = vgg_net.layers['drop7']
+        vgg_out = vgg_net.layers['VGG/drop7']
         # Score Layer
         with tf.variable_scope('score_fr'):
             score_fr = slim.conv2d(vgg_out, opt.num_classes, [1, 1],
@@ -54,8 +54,8 @@ class FCN32s(object):
         # Softmax-Cross entropy Loss
         upsc_rz = tf.reshape(upscore,     (-1, opt.num_classes))
         labl_rz = tf.reshape(self.labels, (-1, opt.num_classes))
-        softmax = tf.nn.softmax(upsc_rz) + 0.0001
-        loss    = -tf.reduce_sum(labl_rz * tf.log(softmax), reduction_indices=[1])
+        loss    = tf.nn.softmax_cross_entropy_with_logits(logits=flat_logits,
+                                                          labels=flat_labels)
         loss    = tf.reduce_mean(loss, name='loss_mean')
         #-----------------------------------------------------------------------
         # Weight Decay
