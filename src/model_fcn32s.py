@@ -233,13 +233,12 @@ class FCN32s(object):
                     feed = {self.images: image_batch,
                             self.labels: label_batch,
                             self.vgg_net.keep_prob: 0.5}
-
                     _, l, _ = sess.run([self.train_op, self.loss, self.incr_glbl_stp], feed_dict=feed)
                     curr_loss += l
                     # Increment step
                     step += 1
                     # Run logs
-                    if i % opt.summary_freq == 0:
+                    if step % opt.summary_freq == 0:
                         # Print global step
                         run_global_step = sess.run([self.global_step])
                         # Estimate loss at global time step
@@ -248,7 +247,7 @@ class FCN32s(object):
                         # Write log
                         writer.add_summary(interm_loss, step)
                     # Run testing
-                    if i % opt.testing_freq == 0:
+                    if step % opt.testing_freq == 0:
                         # Validation Accuracy
                         print('Estimating Testing Accuracy....')
                         total_acc = 0.0
@@ -273,3 +272,4 @@ class FCN32s(object):
 
                 if i%opt.print_every == 0:
                     print('Epoch Completion..{%d/%d} and loss = %d' % (i, n_iters_per_epoch, curr_loss/n_iters_per_epoch))
+
