@@ -5,7 +5,7 @@ import random
 import numpy as np
 import tensorflow as tf
 from data_loader import dataLoader
-from vgg19 import VGG_ILSVRC_19_layer
+from vgg16 import VGG_ILSVRC_16_layers
 from utils import *
 slim = tf.contrib.slim
 # Init values
@@ -48,7 +48,7 @@ class FCN32s(object):
                                   activation_fn=None, padding='SAME',
                                   weights_initializer=bilinear_init,
                                   biases_initializer=None,
-                                  trainable=False, scope='h_embdd_1_1')
+                                  trainable=False, scope=None)
             upscore = upscore[:, 19: (19 + 224), 19: (19 + 224), :] # Crop to match input
         #-------------------------------------------------------------------
         # Softmax-Cross entropy Loss
@@ -105,8 +105,8 @@ class FCN32s(object):
             images_ = tf.pad(images_,  [[0, 0], [100, 100], [100, 100], [0, 0]],\
                              mode='CONSTANT', name='Input_Pad', constant_values=0)
         # VGG Model
-        vgg_net = VGG_ILSVRC_19_layer({'data': images_})
-        vgg_out = vgg_net.layers['drop7']
+        vgg_net = VGG_ILSVRC_16_layers({'data': images_})
+        vgg_out = vgg_net.layers['VGG/drop7']
         # Score Layer
         with tf.variable_scope('score_fr'):
             score_fr = slim.conv2d(vgg_out, opt.num_classes, [1, 1],
@@ -120,7 +120,7 @@ class FCN32s(object):
                                   activation_fn=None, padding='SAME',
                                   weights_initializer=bilinear_init,
                                   biases_initializer=None,
-                                  trainable=False, scope='h_embdd_1_1')
+                                  trainable=False, scope=None)
             upscore = upscore[:, 19: (19 + 224), 19: (19 + 224), :] # Crop to match input
         # Assuming input image is float32
         upscore = tf.reshape(upscore, (-1, opt.num_classes))
@@ -273,4 +273,3 @@ class FCN32s(object):
 
                 if i%opt.print_every == 0:
                     print('Epoch Completion..{%d/%d} and loss = %d' % (i, n_iters_per_epoch, curr_loss/n_iters_per_epoch))
-
