@@ -6,7 +6,7 @@
  Both BSD and VOC 2012 Dataset contains 21 categories of object.
  [[Category list](http://host.robots.ox.ac.uk/pascal/VOC/voc2012/segexamples/index.html)] <br>
 
-## Segmentation Categories
+## Segmentation Class
 [[Class list](seg_class)]
  
  
