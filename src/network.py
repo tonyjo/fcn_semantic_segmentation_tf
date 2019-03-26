@@ -55,7 +55,7 @@ class Network(object):
         '''
         data_dict = np.load(data_path).item()
         for op_name in data_dict:
-            with tf.variable_scope(op_name, reuse=True):
+            with tf.variable_scope('VGG/' + op_name, reuse=True):
                 for param_name, data in data_dict[op_name].iteritems():
                     try:
                         if str(op_name) == 'fc6' and param_name == 'weights':
