@@ -67,6 +67,11 @@ def main(_):
     if not os.path.exists(checkpoint_dir_path):
         os.makedirs(checkpoint_dir_path)
 
+    # Make snapshot checkpoint_dir
+    snapshot_dir_path = os.path.join(data_name_path, FLAGS.checkpoint_dir, 'snapshot')
+    if not os.path.exists(snapshot_dir_path):
+        os.makedirs(snapshot_dir_path)
+
     # Print the arguments
     pp.pprint(FLAGS.__flags)
 

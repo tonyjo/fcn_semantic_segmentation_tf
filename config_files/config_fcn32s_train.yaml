@@ -1,28 +1,26 @@
 dataset_name: pascal_voc
 exp_dir: ./experiments
-train_dataset_dir: /home/tony/Documents/datasets/VOC2012
+train_dataset_dir: /home/tony/Documents/datasets/sbd_dataset
 test_dataset_dir: /home/tony/Documents/datasets/VOC2012
 train_name: train.txt
 test_name: val.txt
 num_classes: 21
-type1: voc
+type1: sbd
 type2: voc
 train_model: model1
-ckpt_dir: checkpoint1
+ckpt_dir: checkpoint2
 continue_train: False
 init_checkpoint_file: None
-log_dir: logs1
-batch_size: 5
-test_batch_size: 5
+log_dir: logs2
+batch_size: 7
+test_batch_size: 4
 train_model: model1
 global_step: 0
 start_step: 0
-epochs: 175
+epochs: 200
 summary_freq: 100
 testing_freq: 4000
-l_rate_decay_epoch: 40
-l2: 0.0002
+l_rate_decay_epoch: 25
+l2: 0.0005
 l_rate: 0.0001
 print_every: 5
-
-

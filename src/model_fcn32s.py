@@ -75,8 +75,9 @@ class FCN32s(object):
         # Learning Rate Decay
         decay_l_rate = tf.train.exponential_decay(opt.l_rate, self.global_step,\
                                                   l_rate_decay_step, 0.9, staircase=True)
-        optim = tf.train.AdamOptimizer(opt.l_rate, beta1=0.9, beta2=0.999,\
-                                       epsilon=1e-08, name='Adam')
+        #optim = tf.train.AdamOptimizer(opt.l_rate, beta1=0.9, beta2=0.999,\
+        #                               epsilon=1e-08, name='Adam')
+        optim = tf.train.AdamOptimizer(opt.l_rate, momentum=0.99, name='SGD')
         #-----------------------------------------------------------------------
         # Other Parameters
         incr_glbl_stp = tf.assign(self.global_step, self.global_step+1)
@@ -162,6 +163,7 @@ class FCN32s(object):
 
         # Checkpoint_path
         ckpt_dir_path = os.path.join(opt.exp_dir, opt.dataset_name, opt.checkpoint_dir)
+        spht_dir_path = os.path.join(opt.exp_dir, opt.dataset_name, opt.checkpoint_dir, 'snapshot')
 
         # Train Data Loader
         train_loader = dataLoader(opt.train_dataset_dir, opt.train_name, 224, 224,
@@ -197,31 +199,29 @@ class FCN32s(object):
         config = tf.GPUOptions(allow_growth=True)
 
         # To save model
-        init_op = tf.group(tf.global_variables_initializer(),\
-                           tf.local_variables_initializer())
-        saver   = tf.train.Saver(max_to_keep=5)
+        init_op  = tf.group(tf.global_variables_initializer(),\
+                            tf.local_variables_initializer())
+        saver_px = tf.train.Saver(max_to_keep=5)
+        snapshot = tf.train.Saver(max_to_keep=5)
 
         with tf.Session(config=tf.ConfigProto(gpu_options=config)) as sess:
             # create log writer object
-            writer = tf.summary.FileWriter(opt.logs_path, graph=sess.graph)
-
+            writer1 = tf.summary.FileWriter(opt.logs_path, graph=sess.graph)
+            writer2 = tf.summary.FileWriter(opt.logs_path + '/test_summary', graph=sess.graph)
             # Intialize the graph
             sess.run(init_op)
-
             # Load the pre-trainined googlenet weights
             self.vgg_net.load('./imagenet_weights/vgg16.npy', sess)
             print('Pre-trainined VGG weights loaded')
-
             # Check if training has to be continued
             if opt.continue_train:
                 if opt.init_checkpoint_file is None:
                     print('Enter a valid checkpoint file')
                 else:
                     load_model = os.path.join(ckpt_dir_path, opt.init_checkpoint_file)
-                    saver.restore(sess, load_model)
+                    saver_px.restore(sess, load_model)
                     sess.run(tf.assign(self.global_step, opt.global_step))
                     print("Resume training from previous checkpoint: %s" % opt.init_checkpoint_file)
-
             # Begin training
             step = 0
             for epoch in range(opt.epochs):
@@ -245,7 +245,7 @@ class FCN32s(object):
                         interm_loss = sess.run(summary_op, feed_dict=feed)
                         print('Global Step:' + str(run_global_step))
                         # Write log
-                        writer.add_summary(interm_loss, step)
+                        writer1.add_summary(interm_loss, step)
                     # Run testing
                     if step % opt.testing_freq == 0:
                         # Validation Accuracy
@@ -262,14 +262,21 @@ class FCN32s(object):
                         # Final accuracy
                         final_accuracy = (total_acc/total_steps) * 100
                         print('Pixel Accuracy: ', final_accuracy)
+                        # Log tensorboard test summary
+                        test_summ_op = sess.run(summary_op, feed_dict=feed)
+                        # Write log
+                        writer2.add_summary(test_summ_op, step)
                         # Save
                         if final_accuracy > best_acc:
-                            best_acc  = final_accuracy
+                            best_acc   = final_accuracy
                             model_name = 'fcn32s_bp_' + str(step)
                             checkpoint_path = os.path.join(ckpt_dir_path, model_name)
                             saver.save(sess, checkpoint_path)
-                            print("Intermediate file saved")
+                        else:
+                            model_name = 'fcn32s_' + str(step)
+                            checkpoint_path = os.path.join(spht_dir_path, model_name)
+                            snapshot.save(sess, checkpoint_path)
+                        print("Intermediate file saved")
 
                 if i%opt.print_every == 0:
                     print('Epoch Completion..{%d/%d} and loss = %d' % (i, n_iters_per_epoch, curr_loss/n_iters_per_epoch))
-
