@@ -77,22 +77,32 @@ class FCN32s(object):
                                                   l_rate_decay_step, 0.9, staircase=True)
         #optim = tf.train.AdamOptimizer(opt.l_rate, beta1=0.9, beta2=0.999,\
         #                               epsilon=1e-08, name='Adam')
-        optim = tf.train.AdamOptimizer(opt.l_rate, momentum=0.99, name='SGD')
+        optim = tf.train.MomentumOptimizer(opt.l_rate, momentum=0.99, name='SGD')
         #-----------------------------------------------------------------------
         # Other Parameters
         incr_glbl_stp = tf.assign(self.global_step, self.global_step+1)
         #-----------------------------------------------------------------------
-        # Gradients
-        grads = tf.gradients(loss, tf.trainable_variables())
-        grads_and_vars = list(zip(grads, tf.trainable_variables()))
-
         # Get the gradients
-        train_op = optim.minimize(loss, var_list=tf.trainable_variables())
+        if opt.average_gradients == 1:
+            train_op = optim.minimize(loss, var_list=tf.trainable_variables())
+            self.train_op = train_op
+        else:
+            # Averaging gradients when batch_size is small
+            # https://gchlebus.github.io/2018/06/05/gradient-averaging.html
+            # Gradients
+            grads_and_vars = optim.compute_gradients(loss, var_list=tf.trainable_variables())
+            avg_grads_and_vars = []
+            self.grad_placeholders = []
+            for grad, var in grads_and_vars:
+                grad_ph = tf.placeholder(grad.dtype, grad.shape)
+                self.grad_placeholders.append(grad_ph)
+                avg_grads_and_vars.append((grad_ph, var))
+            self.grad_op = [x[0] for x in grads_and_vars]
+            self.train_op = optimizer.apply_gradients(avg_grads_and_vars)
 
         self.loss     = loss
         self.upscore  = upscore
         self.vgg_net  = vgg_net
-        self.train_op = train_op
         self.incr_glbl_stp = incr_glbl_stp
 
     def build_test_graph(self, re_use=False):
@@ -224,6 +234,7 @@ class FCN32s(object):
                     print("Resume training from previous checkpoint: %s" % opt.init_checkpoint_file)
             # Begin training
             step = 0
+            gradients = []
             for epoch in range(opt.epochs):
                 print('Epoch {}/{}'.format(epoch, opt.epochs))
                 print('-' * 20)
@@ -233,10 +244,18 @@ class FCN32s(object):
                     feed = {self.images: image_batch,
                             self.labels: label_batch,
                             self.vgg_net.keep_prob: 0.5}
-                    _, l, _ = sess.run([self.train_op, self.loss, self.incr_glbl_stp], feed_dict=feed)
+                    if opt.average_gradients == 1:
+                        _, l, _ = sess.run([self.train_op, self.loss, self.incr_glbl_stp], feed_dict=feed)
+                    else:
+                        grads, l, _ = sess.run([self.grad_op, self.loss, self.incr_glbl_stp], feed_dict=feed)
+                        gradients.append(grads)
+                        if len(gradients) == opt.average_gradients:
+                            for i, placeholder in enumerate(self.grad_placeholders):
+                                feed[placeholder] = np.stack([g[i] for g in self._gradients], axis=0).mean(axis=0)
+                            session.run(self.train_op, feed_dict=feed)
+                            gradients = [] # reset gradients
+                    # Accumlate Loss
                     curr_loss += l
-                    # Increment step
-                    step += 1
                     # Run logs
                     if step % opt.summary_freq == 0:
                         # Print global step
@@ -271,12 +290,14 @@ class FCN32s(object):
                             best_acc   = final_accuracy
                             model_name = 'fcn32s_bp_' + str(step)
                             checkpoint_path = os.path.join(ckpt_dir_path, model_name)
-                            saver.save(sess, checkpoint_path)
+                            saver_px.save(sess, checkpoint_path)
                         else:
                             model_name = 'fcn32s_' + str(step)
                             checkpoint_path = os.path.join(spht_dir_path, model_name)
                             snapshot.save(sess, checkpoint_path)
                         print("Intermediate file saved")
-
+                    # Increment step
+                    step += 1
+                # Print Progress
                 if i%opt.print_every == 0:
                     print('Epoch Completion..{%d/%d} and loss = %d' % (i, n_iters_per_epoch, curr_loss/n_iters_per_epoch))

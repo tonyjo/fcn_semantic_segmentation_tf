@@ -40,6 +40,7 @@ flags.DEFINE_string("logs_path",            config['log_dir'],               "Te
 flags.DEFINE_string("mode",                 "Train",                         "Train/Test")
 flags.DEFINE_integer("batch_size",          config['batch_size'],            "The size of of a sample batch")
 flags.DEFINE_integer("test_batch_size",     config['test_batch_size'],       "The size of of a sample batch")
+flags.DEFINE_integer("average_gradients",   config['average_gradients'],     "Average gradients over n steps")
 flags.DEFINE_string("train_model",          config['train_model'],           "Which model to train")
 flags.DEFINE_integer("global_step",         config['global_step'],           "Starting Global step")
 flags.DEFINE_integer("start_step",          config['start_step'],            "Starting training step")
