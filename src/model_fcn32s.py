@@ -90,6 +90,7 @@ class FCN32s(object):
             # Averaging gradients when batch_size is small
             # https://gchlebus.github.io/2018/06/05/gradient-averaging.html
             # Gradients
+            print('Gradient averaging selected!')
             grads_and_vars = optim.compute_gradients(loss, var_list=tf.trainable_variables())
             avg_grads_and_vars = []
             self.grad_placeholders = []
@@ -97,8 +98,8 @@ class FCN32s(object):
                 grad_ph = tf.placeholder(grad.dtype, grad.shape)
                 self.grad_placeholders.append(grad_ph)
                 avg_grads_and_vars.append((grad_ph, var))
-            self.grad_op = [x[0] for x in grads_and_vars]
-            self.train_op = optimizer.apply_gradients(avg_grads_and_vars)
+            self.grad_op  = [x[0] for x in grads_and_vars]
+            self.train_op = optim.apply_gradients(avg_grads_and_vars)
 
         self.loss     = loss
         self.upscore  = upscore
