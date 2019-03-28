@@ -252,8 +252,8 @@ class FCN32s(object):
                         gradients.append(grads)
                         if len(gradients) == opt.average_gradients:
                             for i, placeholder in enumerate(self.grad_placeholders):
-                                feed[placeholder] = np.stack([g[i] for g in self._gradients], axis=0).mean(axis=0)
-                            session.run(self.train_op, feed_dict=feed)
+                                feed[placeholder] = np.stack([g[i] for g in gradients], axis=0).mean(axis=0)
+                            sess.run(self.train_op, feed_dict=feed)
                             gradients = [] # reset gradients
                     # Accumlate Loss
                     curr_loss += l
