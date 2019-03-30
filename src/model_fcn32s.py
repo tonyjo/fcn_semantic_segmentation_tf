@@ -137,7 +137,8 @@ class FCN32s(object):
         # Assuming input image is float32
         upscore = tf.reshape(upscore, (-1, opt.num_classes))
         upscore = tf.nn.softmax(upscore)
-        upscore = tf.reshape(upscore, [tf.shape(self.images)[0], 224, 224, opt.num_classes])
+        upscore = tf.reshape(upscore, [tf.shape(self.images)[0], 224, 224, opt.num_classes]) # B, H, W, C
+        upscore = tf.argmax(upscore, axis=-1, output_type=tf.int32) # B, H, W
 
         self.vgg_net = vgg_net
         self.upscore = upscore
@@ -302,3 +303,75 @@ class FCN32s(object):
                 # Print Progress
                 if i%opt.print_every == 0:
                     print('Epoch Completion..{%d/%d} and loss = %d' % (i, n_iters_per_epoch, curr_loss/n_iters_per_epoch))
+    #---------------------------------------------------------------------------
+    def test(self):
+        # Checkpoint_path
+        ckpt_dir_path = os.path.join(opt.exp_dir, opt.dataset_name, opt.checkpoint_dir)
+
+        # Test Data Loader
+        test_loader  = dataLoader(opt.test_dataset_dir, opt.test_name, 224, 224,
+                                  mode='Test', dtype=opt.type2)
+        test_gen     = test_loader.gen_data_batch(batch_size=opt.test_batch_size)
+
+        # Build graph
+        self.build_test_graph()
+
+        # Compute steps
+        n_examples = test_loader.max_steps
+        n_iters    = int(np.ceil(float(n_examples)/opt.test_batch_size))
+        print('Total Training Steps: ', n_iters)
+
+        # Set GPU options
+        config = tf.GPUOptions(allow_growth=True)
+
+        # To save model
+        init_op  = tf.group(tf.global_variables_initializer(),\
+                            tf.local_variables_initializer())
+        saver_px = tf.train.Saver()
+
+        # Total Histogram
+        hist = np.zeros((opt.num_classes, opt.num_classes))
+
+        with tf.Session(config=tf.ConfigProto(gpu_options=config)) as sess:
+            # Intialize the graph
+            sess.run(init_op)
+
+            # Load the pre-trainined googlenet weights
+            self.vgg_net.load('./imagenet_weights/vgg16.npy', sess)
+            print('Pre-trainined VGG weights loaded')
+
+            # Check if training has to be continued
+            if opt.continue_train:
+                if opt.init_checkpoint_file is None:
+                    print('Enter a valid checkpoint file')
+                else:
+                    load_model = os.path.join(ckpt_dir_path, opt.init_checkpoint_file)
+                    saver_px.restore(sess, load_model)
+                    print("Resume training from previous checkpoint: %s" % opt.init_checkpoint_file)
+
+            # Interations
+            for i in range(n_iters):
+                image_batch, label_batch = next(train_gen)
+                feed = {self.images: image_batch,
+                        self.labels: label_batch,
+                        self.vgg_net.keep_prob: 0.5}
+                # Run session
+                pred = sess.run(self.upscore, feed_dict=feed)
+                pred = pred.astype(np.float32)
+                # Compute Hist
+                hist += compute_hist(gt=label_batch, pred=pred, n_cl=opt.num_classes)
+
+            # Overall accuracy
+            acc = np.diag(hist).sum() / hist.sum()
+            print('>>> Overall accuracy: ', acc)
+
+            # Per-class accuracy
+            acc = np.diag(hist) / hist.sum(1)
+            print('>>> Mean accuracy: ', np.nanmean(acc))
+
+            # Per-class IU
+            iu = np.diag(hist) / (hist.sum(1) + hist.sum(0) - np.diag(hist))
+            print('>>> Mean IU: ', np.nanmean(iu))
+            freq = hist.sum(1) / hist.sum()
+            print('>>> Fwavacc: ', (freq[freq > 0] * iu[freq > 0]).sum())
+#-------------------------------------------------------------------------------
