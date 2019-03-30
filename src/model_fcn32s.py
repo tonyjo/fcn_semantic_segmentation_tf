@@ -138,8 +138,10 @@ class FCN32s(object):
         upscore = tf.reshape(upscore, (-1, opt.num_classes))
         upscore = tf.nn.softmax(upscore)
         upscore = tf.reshape(upscore, [tf.shape(self.images)[0], 224, 224, opt.num_classes]) # B, H, W, C
-        upscore = tf.argmax(upscore, axis=-1, output_type=tf.int32) # B, H, W
+        upscore = tf.argmax(upscore,     axis=-1, output_type=tf.int32) # B, H, W
+        grd_tth = tf.argmax(self.labels, axis=-1, output_type=tf.int32) # B, H, W
 
+        self.grd_tth = grd_tth
         self.vgg_net = vgg_net
         self.upscore = upscore
 
@@ -356,10 +358,11 @@ class FCN32s(object):
                         self.labels: label_batch,
                         self.vgg_net.keep_prob: 0.5}
                 # Run session
-                pred = sess.run(self.upscore, feed_dict=feed)
+                pred, grnd = sess.run([self.upscore, self.grd_tth], feed_dict=feed)
+                grnd = grnd.astype(np.float32)
                 pred = pred.astype(np.float32)
                 # Compute Hist
-                hist += compute_hist(gt=label_batch, pred=pred, n_cl=opt.num_classes)
+                hist += compute_hist(gt=grnd, pred=pred, n_cl=opt.num_classes)
 
             # Overall accuracy
             acc = np.diag(hist).sum() / hist.sum()
