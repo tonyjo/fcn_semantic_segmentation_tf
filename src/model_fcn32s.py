@@ -356,7 +356,7 @@ class FCN32s(object):
                 image_batch, label_batch = next(train_gen)
                 feed = {self.images: image_batch,
                         self.labels: label_batch,
-                        self.vgg_net.keep_prob: 0.5}
+                        self.vgg_net.keep_prob: 1.0}
                 # Run session
                 pred, grnd = sess.run([self.upscore, self.grd_tth], feed_dict=feed)
                 grnd = grnd.astype(np.float32)
