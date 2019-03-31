@@ -29,7 +29,6 @@ flags.DEFINE_string("exp_dir",              config['exp_dir'],               "Ex
 flags.DEFINE_string("test_dataset_dir",     config['test_dataset_dir'],      "Test Dataset directory")
 flags.DEFINE_string("test_name",            config['test_name'],             "Test File")
 flags.DEFINE_integer('num_classes',         config['num_classes'],           "Total classes")
-flags.DEFINE_string("type1",                config['type1'],                 "Dataset type-- sbd/voc")
 flags.DEFINE_string("type2",                config['type2'],                 "Dataset type-- sbd/voc")
 flags.DEFINE_string("checkpoint_dir",       config['ckpt_dir'],              "Dir to save the checkpoints")
 flags.DEFINE_bool("continue_train",         config['continue_train'],        "Continue Train")

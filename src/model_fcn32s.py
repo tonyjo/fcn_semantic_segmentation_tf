@@ -7,6 +7,7 @@ import tensorflow as tf
 from data_loader import dataLoader
 from vgg16 import VGG_ILSVRC_16_layers
 from utils import *
+from score import *
 slim = tf.contrib.slim
 # Init values
 bilinear_wts  = get_upsampling_weight(in_channels=21, out_channels=21, kernel_size=64)
@@ -307,6 +308,7 @@ class FCN32s(object):
                     print('Epoch Completion..{%d/%d} and loss = %d' % (i, n_iters_per_epoch, curr_loss/n_iters_per_epoch))
     #---------------------------------------------------------------------------
     def test(self):
+        opt = self.opt
         # Checkpoint_path
         ckpt_dir_path = os.path.join(opt.exp_dir, opt.dataset_name, opt.checkpoint_dir)
 
@@ -353,17 +355,18 @@ class FCN32s(object):
 
             # Interations
             for i in range(n_iters):
-                image_batch, label_batch = next(train_gen)
+                image_batch, label_batch = next(test_gen)
                 feed = {self.images: image_batch,
                         self.labels: label_batch,
                         self.vgg_net.keep_prob: 1.0}
                 # Run session
                 pred, grnd = sess.run([self.upscore, self.grd_tth], feed_dict=feed)
-                grnd = grnd.astype(np.float32)
-                pred = pred.astype(np.float32)
                 # Compute Hist
                 hist += compute_hist(gt=grnd, pred=pred, n_cl=opt.num_classes)
-
+                if i%100 == 0:
+                  print('Completion {}/{}'.format(i, n_iters))
+            print('Completion {}/{}'.format(n_iters, n_iters))
+            print('Inference Completed!')
             # Overall accuracy
             acc = np.diag(hist).sum() / hist.sum()
             print('>>> Overall accuracy: ', acc)

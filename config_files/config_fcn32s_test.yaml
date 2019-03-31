@@ -1,15 +1,15 @@
 dataset_name: pascal_voc
 exp_dir: ./experiments
 test_dataset_dir: /home/tony/Documents/datasets/VOC2012
-test_name: val.txt
+test_name: seg11valid.txt
 num_classes: 21
 type2: voc
 train_model: model1
-ckpt_dir: checkpoint1
+ckpt_dir: checkpoint2
 continue_train: True
-init_checkpoint_file: fcn32s_bp_16000
+init_checkpoint_file: fcn32s_bp_128000
 test_batch_size: 1
 train_model: model1
-global_step: 16000
+global_step: 128000
 print_every: 5
 
