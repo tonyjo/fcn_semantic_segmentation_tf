@@ -223,6 +223,7 @@ class FCN16s(object):
         # Checkpoint_path
         ckpt_dir_path = os.path.join(opt.exp_dir, opt.dataset_name, opt.checkpoint_dir)
         spht_dir_path = os.path.join(opt.exp_dir, opt.dataset_name, opt.checkpoint_dir, 'snapshot')
+        reld_dir_path = os.path.join(opt.exp_dir, opt.dataset_name, opt.reload_dir)
 
         # Train Data Loader
         train_loader = dataLoader(opt.train_dataset_dir, opt.train_name, 224, 224,
@@ -276,11 +277,11 @@ class FCN16s(object):
             # Load FCN32s weights
             if opt.reload_fcn16:
                 if opt.reload_fcn32_file is None:
-                    print('Enter a valid checkpoint file')
+                    print('Enter a valid FCN32s checkpoint file')
                 else:
-                    load_model = os.path.join(ckpt_dir_path, opt.reload_fcn32_file)
+                    load_model = os.path.join(reld_dir_path, opt.reload_fcn32_file)
                     reloader.restore(sess, load_model)
-                    print("FCN32s reloaded: %s" % opt.reload_fcn32_file)
+                    print("FCN32s weights reloaded: %s" % opt.reload_fcn32_file)
             # Check if training has to be continued
             if opt.continue_train:
                 if opt.init_checkpoint_file is None:
@@ -346,11 +347,11 @@ class FCN16s(object):
                         # Save
                         if final_accuracy > best_acc:
                             best_acc   = final_accuracy
-                            model_name = 'fcn32s_bp_' + str(step)
+                            model_name = 'fcn16s_bp_' + str(step)
                             checkpoint_path = os.path.join(ckpt_dir_path, model_name)
                             saver_px.save(sess, checkpoint_path)
                         else:
-                            model_name = 'fcn32s_' + str(step)
+                            model_name = 'fcn16s_' + str(step)
                             checkpoint_path = os.path.join(spht_dir_path, model_name)
                             snapshot.save(sess, checkpoint_path)
                         print("Intermediate file saved")
