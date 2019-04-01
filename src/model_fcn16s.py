@@ -59,7 +59,7 @@ class FCN16s(object):
             score_pool4 = slim.conv2d(pool_4, opt.num_classes, [1, 1], stride=1,
                                       activation_fn=None, padding='VALID',
                                       weights_initializer=tf.zeros_initializer(),
-                                      biases_initializer=None,
+                                      biases_initializer=tf.zeros_initializer(),
                                       trainable=True, scope=None)
         # Fuse-pool4 layer
         fuse_pool4 = tf.add(upscore_2, score_pool4, name='fuse_pool4')
@@ -167,7 +167,7 @@ class FCN16s(object):
             score_pool4 = slim.conv2d(pool_4, opt.num_classes, [1, 1], stride=1,
                                       activation_fn=None, padding='VALID',
                                       weights_initializer=tf.zeros_initializer(),
-                                      biases_initializer=None,
+                                      biases_initializer=tf.zeros_initializer(),
                                       trainable=True, scope=None)
         # Fuse-pool4 layer
         fuse_pool4 = tf.add(upscore_2, score_pool4, name='fuse_pool4')
