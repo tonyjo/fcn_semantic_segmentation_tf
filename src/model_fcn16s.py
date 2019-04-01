@@ -43,7 +43,7 @@ class FCN16s(object):
         with tf.variable_scope('score_fr'):
             score_fr = slim.conv2d(vgg_out, opt.num_classes, [1, 1],
                                    activation_fn=None,
-                                   padding='SAME',
+                                   padding='VALID',
                                    weights_initializer=tf.zeros_initializer(),
                                    stride=1, scope='score_fr')
         # Upscore-2
