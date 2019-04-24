@@ -21,5 +21,6 @@
 
 
 ## To-Do
-FCN-16s
-FCN-8s
+1. FCN-16s
+2. FCN-8s
+
