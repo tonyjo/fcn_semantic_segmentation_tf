@@ -17,4 +17,9 @@
  - **FCN32**
    - **VGG16**   [[VGG16 for tensorflow](https://github.com/machrisaa/tensorflow-vgg)] <br>
      (_Transfer Learning_) Using pretrained VGG19 weightings except the last prediction layer, which
-     was replaced and trained with a new upscore layer to perform upsampling. 
+     was replaced and trained with a new upscore layer intialized with bilinear-weights to perform upsampling.
+
+
+## To-Do
+FCN-16s
+FCN-8s
