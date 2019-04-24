@@ -1,5 +1,8 @@
 # Fully Convolutional Networks for Semantic Segmentation
 
+### Sample Output
+![alt text](./images/title.png "Sample output")
+
 ## Dataset
  - Traning Data:  **BSD**   [[link](http://home.bharathh.info/pubs/codes/SBD/download.html)]
  - Testing Data:  **VOC 2012**   [[link](http://host.robots.ox.ac.uk/pascal/VOC/voc2012/index.html#voc2012vs2011)] <br><br>

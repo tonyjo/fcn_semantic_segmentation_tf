@@ -104,8 +104,11 @@ class FCN16s(object):
         incr_glbl_stp = tf.assign(self.global_step, self.global_step+1)
         #-----------------------------------------------------------------------
         # Collect var list
+        all_var_list = []
         vgg_var_list      = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='VGG')
+        all_var_list.extend(vgg_var_list)
         score_fr_var_list = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='score_fr')
+
         #-----------------------------------------------------------------------
         # Get the gradients
         if opt.average_gradients == 1:
