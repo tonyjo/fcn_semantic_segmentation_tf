@@ -15,6 +15,6 @@
  
 ## Network
  - **FCN32**
-   - **VGG19**   [[VGG19 for tensorflow](https://github.com/machrisaa/tensorflow-vgg)] <br>
+   - **VGG16**   [[VGG16 for tensorflow](https://github.com/machrisaa/tensorflow-vgg)] <br>
      (_Transfer Learning_) Using pretrained VGG19 weightings except the last prediction layer, which
      was replaced and trained with a new upscore layer to perform upsampling. 
