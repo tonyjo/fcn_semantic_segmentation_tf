@@ -42,6 +42,7 @@ class FCN32s(object):
                                    activation_fn=None,
                                    padding='SAME',
                                    weights_initializer=tf.zeros_initializer(),
+                                   biases_initializer=tf.zeros_initializer(),
                                    stride=1, scope='score_fr')
         # Upsample
         with tf.variable_scope('upscore'):
@@ -126,6 +127,7 @@ class FCN32s(object):
                                    activation_fn=None,
                                    padding='SAME',
                                    weights_initializer=tf.zeros_initializer(),
+                                   biases_initializer=tf.zeros_initializer(),
                                    stride=1, scope='score_fr')
         # Upsample
         with tf.variable_scope('upscore'):
