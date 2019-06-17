@@ -77,7 +77,7 @@ class FCN32s(object):
         # Learning Rate Decay
         decay_l_rate = tf.train.exponential_decay(opt.l_rate, self.global_step,\
                                                   l_rate_decay_step, 0.1, staircase=True)
-        #optim = tf.train.AdamOptimizer(opt.l_rate, beta1=0.9, beta2=0.999,\
+        # optim = tf.train.AdamOptimizer(opt.l_rate, beta1=0.9, beta2=0.999,\
         #                               epsilon=1e-08, name='Adam')
         optim = tf.train.MomentumOptimizer(opt.l_rate, momentum=0.99, name='SGD')
         #-----------------------------------------------------------------------

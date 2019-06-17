@@ -8,6 +8,7 @@ import argparse
 import numpy as np
 import tensorflow as tf
 from model_fcn32s import FCN32s
+from model_fcn16s import FCN16s
 
 pp = pprint.PrettyPrinter(indent=1)
 #-------------------------------------------------------------------------------
@@ -33,8 +34,11 @@ flags.DEFINE_string("test_name",            config['test_name'],             "Te
 flags.DEFINE_integer('num_classes',         config['num_classes'],           "Total classes")
 flags.DEFINE_string("type1",                config['type1'],                 "Dataset type-- sbd/voc")
 flags.DEFINE_string("type2",                config['type2'],                 "Dataset type-- sbd/voc")
+flags.DEFINE_bool("reload_skip_model",      config['reload_skip_model'],     "Reload 32s/16s weights")
+flags.DEFINE_string("reload_dir",           config['reload_dir'],           "Checkpoint reload folder")
+flags.DEFINE_string("reload_ckpt_file",     config['reload_ckpt_file'],      "Checkpoint reload checkpoint")
 flags.DEFINE_string("checkpoint_dir",       config['ckpt_dir'],              "Dir to save the checkpoints")
-flags.DEFINE_bool("continue_train",         config['continue_train'],       "Continue Train")
+flags.DEFINE_bool("continue_train",         config['continue_train'],        "Continue Train")
 flags.DEFINE_string("init_checkpoint_file", config['init_checkpoint_file'],  "Checkpoint file")
 flags.DEFINE_string("logs_path",            config['log_dir'],               "Tensorboard log path")
 flags.DEFINE_string("mode",                 "Train",                         "Train/Test")
@@ -87,6 +91,9 @@ def main(_):
 
     if FLAGS.train_model == 'model1':
         fcn = FCN32s(FLAGS)
+        fcn.train()
+    if FLAGS.train_model == 'model2':
+        fcn = FCN16s(FLAGS)
         fcn.train()
 
 if __name__ == '__main__':

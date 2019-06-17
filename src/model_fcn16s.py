@@ -45,6 +45,7 @@ class FCN16s(object):
                                    activation_fn=None,
                                    padding='VALID',
                                    weights_initializer=tf.zeros_initializer(),
+                                   biases_initializer=tf.zeros_initializer(),
                                    stride=1, scope='score_fr')
         # Upscore-2
         with tf.variable_scope('upscore_2'):
@@ -53,7 +54,7 @@ class FCN16s(object):
                                   weights_initializer=bilinear_init_1,
                                   biases_initializer=None,
                                   trainable=True, scope=None)
-            upscore_2 = upscore_2[:, 3:, 3:, :] # Crop to match pool-4
+            upscore_2 = upscore_2[:, 1:, 1:, :] # Crop to match pool-4 shape
         # Score-pool4 layer
         with tf.variable_scope('score_pool4'):
             score_pool4 = slim.conv2d(pool_4, opt.num_classes, [1, 1], stride=1,
@@ -95,8 +96,8 @@ class FCN16s(object):
         #-----------------------------------------------------------------------
         # Learning Rate Decay
         decay_l_rate = tf.train.exponential_decay(opt.l_rate, self.global_step,\
-                                                  l_rate_decay_step, 0.9, staircase=True)
-        #optim = tf.train.AdamOptimizer(opt.l_rate, beta1=0.9, beta2=0.999,\
+                                                  l_rate_decay_step, 0.1, staircase=True)
+        # optim = tf.train.AdamOptimizer(opt.l_rate, beta1=0.9, beta2=0.999,\
         #                               epsilon=1e-08, name='Adam')
         optim = tf.train.MomentumOptimizer(opt.l_rate, momentum=0.99, name='SGD')
         #-----------------------------------------------------------------------
@@ -104,10 +105,9 @@ class FCN16s(object):
         incr_glbl_stp = tf.assign(self.global_step, self.global_step+1)
         #-----------------------------------------------------------------------
         # Collect var list
-        all_var_list = []
-        vgg_var_list      = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='VGG')
-        all_var_list.extend(vgg_var_list)
+        all_32s_var_list  = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='VGG')
         score_fr_var_list = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='score_fr')
+        all_32s_var_list.extend(score_fr_var_list)
 
         #-----------------------------------------------------------------------
         # Get the gradients
@@ -133,8 +133,7 @@ class FCN16s(object):
         self.upscore           = upscore
         self.vgg_net           = vgg_net
         self.incr_glbl_stp     = incr_glbl_stp
-        self.vgg_var_list      = vgg_var_list
-        self.score_fr_var_list = score_fr_var_list
+        self.all_32s_var_list  = all_32s_var_list
 
     def build_test_graph(self, re_use=False):
         opt = self.opt
@@ -154,8 +153,9 @@ class FCN16s(object):
         with tf.variable_scope('score_fr'):
             score_fr = slim.conv2d(vgg_out, opt.num_classes, [1, 1],
                                    activation_fn=None,
-                                   padding='SAME',
+                                   padding='VALID',
                                    weights_initializer=tf.zeros_initializer(),
+                                   biases_initializer=tf.zeros_initializer(),
                                    stride=1, scope='score_fr')
         # Upscore-2
         with tf.variable_scope('upscore_2'):
@@ -164,7 +164,7 @@ class FCN16s(object):
                                   weights_initializer=bilinear_init_1,
                                   biases_initializer=None,
                                   trainable=True, scope=None)
-            upscore_2 = upscore_2[:, 3:, 3:, :] # Crop to match pool-4
+            upscore_2 = upscore_2[:, 1:, 1:, :] # Crop to match pool-4 shape
         # Score-pool4 layer
         with tf.variable_scope('score_pool4'):
             score_pool4 = slim.conv2d(pool_4, opt.num_classes, [1, 1], stride=1,
@@ -264,9 +264,9 @@ class FCN16s(object):
         # To save model
         init_op  = tf.group(tf.global_variables_initializer(),\
                             tf.local_variables_initializer())
-        saver_px = tf.train.Saver(max_to_keep=5)
+        saver_px = tf.train.Saver(max_to_keep=1)
         snapshot = tf.train.Saver(max_to_keep=5)
-        reloader = tf.train.Saver([self.vgg_var_list, self.score_fr_var_list])
+        reloader = tf.train.Saver(self.all_32s_var_list)
 
         with tf.Session(config=tf.ConfigProto(gpu_options=config)) as sess:
             # create log writer object
@@ -278,13 +278,14 @@ class FCN16s(object):
             self.vgg_net.load('./imagenet_weights/vgg16.npy', sess)
             print('Pre-trainined VGG weights loaded')
             # Load FCN32s weights
-            if opt.reload_fcn16:
-                if opt.reload_fcn32_file is None:
+            if opt.reload_skip_model:
+                if opt.reload_ckpt_file is None:
                     print('Enter a valid FCN32s checkpoint file')
                 else:
-                    load_model = os.path.join(reld_dir_path, opt.reload_fcn32_file)
+                    load_model = os.path.join(reld_dir_path, opt.reload_ckpt_file)
                     reloader.restore(sess, load_model)
-                    print("FCN32s weights reloaded: %s" % opt.reload_fcn32_file)
+                    sess.run(tf.assign(self.global_step, opt.global_step))
+                    print("FCN32s weights reloaded: %s" % opt.reload_ckpt_file)
             # Check if training has to be continued
             if opt.continue_train:
                 if opt.init_checkpoint_file is None:
