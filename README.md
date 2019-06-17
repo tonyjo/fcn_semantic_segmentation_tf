@@ -37,6 +37,12 @@ or
 ### Results
 Coming Soon.
 
+| Model  | Pixel Acc. | Mean Acc. | Mean IU | f.w. IU |
+|--------|:----------:|:---------:|:-------:|:-------:|
+|FCN-32s |     -      |    -      |    -    |     -   |
+|FCN-16s |     -      |    -      |    -    |     -   |
+|FCN-8s  |     -      |    -      |    -    |     -   | 
+
 ### To-Do
 FCN-8s model
 
@@ -47,7 +53,7 @@ FCN-8s model
                Jonathan Long and
                Trevor Darrell},
   title     = {Fully Convolutional Networks for Semantic Segmentation},
-  journal   = {{IEEE} Trans. Pattern Anal. Mach. Intell.},
+  journal   = {{IEEE} Trans. Pattern Analysis and Machine Intelligence},
   volume    = {39},
   number    = {4},
   pages     = {640--651},
