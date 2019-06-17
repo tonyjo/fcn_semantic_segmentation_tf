@@ -28,13 +28,13 @@ or
 ./run0.sh config_files/config_fcn16s_train.yaml
 ```
 
-## Results
+### Results
+Coming Soon.
 
+### To-Do
+FCN-8s model
 
-## To-Do
-2. FCN-8s
-
-### Paper citation
+#### Paper citation
 ```
 @article{ShelhamerLD17,
   author    = {Evan Shelhamer and
