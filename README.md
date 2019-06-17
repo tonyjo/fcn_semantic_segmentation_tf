@@ -9,18 +9,32 @@
  Both BSD and VOC 2012 Dataset contains 21 categories of object.
  [[Category list](http://host.robots.ox.ac.uk/pascal/VOC/voc2012/segexamples/index.html)] <br>
 
-## Segmentation Class
+#### Segmentation Class
 [[Class list](seg_class)]
  
- 
-## Network
- - **FCN32**
-   - **VGG16**   [[VGG16 for tensorflow](https://github.com/machrisaa/tensorflow-vgg)] <br>
-     (_Transfer Learning_) Using pretrained VGG19 weightings except the last prediction layer, which
-     was replaced and trained with a new upscore layer intialized with bilinear-weights to perform upsampling.
+## Prerequisites
+1. Tensorflow Version --v1.4 with CUDA > 8.0
+2. Numpy --v1.15
+3. OpenCV --v4.0
+4. Matplotlib --v2.0
+
+## Results
 
 
 ## To-Do
-1. FCN-16s
 2. FCN-8s
 
+### Paper citation
+```
+@article{ShelhamerLD17,
+  author    = {Evan Shelhamer and
+               Jonathan Long and
+               Trevor Darrell},
+  title     = {Fully Convolutional Networks for Semantic Segmentation},
+  journal   = {{IEEE} Trans. Pattern Anal. Mach. Intell.},
+  volume    = {39},
+  number    = {4},
+  pages     = {640--651},
+  year      = {2017}
+}
+```
