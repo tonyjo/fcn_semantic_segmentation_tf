@@ -353,7 +353,7 @@ class FCN32s(object):
                 else:
                     load_model = os.path.join(ckpt_dir_path, opt.init_checkpoint_file)
                     saver_px.restore(sess, load_model)
-                    print("Resume training from previous checkpoint: %s" % opt.init_checkpoint_file)
+                    print("Resume Inference from previous checkpoint: %s" % opt.init_checkpoint_file)
 
             # Interations
             for i in range(n_iters):

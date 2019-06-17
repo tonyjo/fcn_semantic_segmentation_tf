@@ -341,6 +341,8 @@ class FCN16s(object):
                                     self.vgg_net.keep_prob: 1.0}
                             acc = sess.run(self.px_acc, feed_dict=feed)
                             total_acc += acc
+                            if j%200 == 0:
+                              print('Completion {}/{}'.format(j, total_steps))
                         # Final accuracy
                         final_accuracy = (total_acc/total_steps) * 100
                         print('Pixel Accuracy: ', final_accuracy)
@@ -409,7 +411,7 @@ class FCN16s(object):
                 else:
                     load_model = os.path.join(ckpt_dir_path, opt.init_checkpoint_file)
                     saver_px.restore(sess, load_model)
-                    print("Resume training from previous checkpoint: %s" % opt.init_checkpoint_file)
+                    print("Resume Inference from previous checkpoint: %s" % opt.init_checkpoint_file)
 
             # Interations
             for i in range(n_iters):
