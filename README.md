@@ -11,7 +11,7 @@
 
 #### Segmentation Class
 [[Class list](seg_class)]
- 
+
 ## Prerequisites
 1. Tensorflow Version --v1.4 with CUDA > 8.0
 2. Numpy --v1.15
@@ -22,8 +22,8 @@
 Once the dataset is obtained, the model properties can be configured in config_files directory:
 ```
 config_files
-│   config_fcn16s_train.yaml
-│   config_fcn32s_train.yaml    
+  │ config_fcn16s_train.yaml
+  | config_fcn32s_train.yaml    
 ```
 and then run the following command:
 ```bash
