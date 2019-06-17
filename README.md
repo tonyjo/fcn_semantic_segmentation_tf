@@ -18,6 +18,16 @@
 3. OpenCV --v4.0
 4. Matplotlib --v2.0
 
+### Training
+Once the dataset is obtained, each model properties can be configured in config_files
+```bash
+./run0.sh config_files/config_fcn32s_train.yaml
+```
+or
+```bash
+./run0.sh config_files/config_fcn16s_train.yaml
+```
+
 ## Results
 
 
