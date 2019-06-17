@@ -19,7 +19,13 @@
 4. Matplotlib --v2.0
 
 ### Training
-Once the dataset is obtained, each model properties can be configured in config_files
+Once the dataset is obtained, the model properties can be configured in config_files directory:
+```
+config_files
+│   config_fcn16s_train.yaml
+│   config_fcn32s_train.yaml    
+```
+and then run the following command:
 ```bash
 ./run0.sh config_files/config_fcn32s_train.yaml
 ```
