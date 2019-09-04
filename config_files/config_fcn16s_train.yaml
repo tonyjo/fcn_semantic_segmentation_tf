@@ -12,8 +12,8 @@ ckpt_dir: checkpoint3
 reload_skip_model: True
 reload_dir: checkpoint2
 reload_ckpt_file: fcn32s_bp_120000
-continue_train: False
-init_checkpoint_file: None
+continue_train: True
+init_checkpoint_file: fcn16s_bp_116000
 log_dir: logs3
 batch_size: 5
 test_batch_size: 4
@@ -25,7 +25,7 @@ epochs: 175
 summary_freq: 100
 testing_freq: 4000
 l_rate_decay_epoch: 25
-l2: 0.0002
-l_rate: 0.00001
+l2: 0.0005
+l_rate: 0.0001
 print_every: 5
 
