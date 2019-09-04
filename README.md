@@ -11,7 +11,7 @@
 
 #### Segmentation Class
 [[Class list](seg_class)]
- 
+
 ## Prerequisites
 1. Tensorflow Version --v1.4 with CUDA > 8.0
 2. Numpy --v1.15
@@ -22,8 +22,8 @@
 Once the dataset is obtained, the model properties can be configured in config_files directory:
 ```
 config_files
-│   config_fcn16s_train.yaml
-│   config_fcn32s_train.yaml    
+  │ config_fcn16s_train.yaml
+  | config_fcn32s_train.yaml    
 ```
 and then run the following command:
 ```bash
@@ -37,6 +37,12 @@ or
 ### Results
 Coming Soon.
 
+| Model  | Pixel Acc. | Mean Acc. | Mean IU | f.w. IU |
+|--------|:----------:|:---------:|:-------:|:-------:|
+|FCN-32s |     -      |    -      |    -    |     -   |
+|FCN-16s |     -      |    -      |    -    |     -   |
+|FCN-8s  |     -      |    -      |    -    |     -   | 
+
 ### To-Do
 FCN-8s model
 
@@ -47,7 +53,7 @@ FCN-8s model
                Jonathan Long and
                Trevor Darrell},
   title     = {Fully Convolutional Networks for Semantic Segmentation},
-  journal   = {{IEEE} Trans. Pattern Anal. Mach. Intell.},
+  journal   = {{IEEE} Trans. Pattern Analysis and Machine Intelligence},
   volume    = {39},
   number    = {4},
   pages     = {640--651},
