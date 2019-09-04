@@ -12,7 +12,7 @@ ckpt_dir: checkpoint3
 reload_skip_model: True
 reload_dir: checkpoint2
 reload_ckpt_file: fcn32s_bp_120000
-continue_train: True
+continue_train: False
 init_checkpoint_file: fcn16s_bp_116000
 log_dir: logs3
 batch_size: 5
