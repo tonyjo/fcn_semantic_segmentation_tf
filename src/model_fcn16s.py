@@ -73,7 +73,6 @@ class FCN16s(object):
                                   biases_initializer=None,
                                   trainable=False, scope=None)
             upscore = upscore[:, 19: (19 + 224), 19: (19 + 224), :] # Crop to match input
-        print(upscore.get_shape())
         #-------------------------------------------------------------------
         # Softmax-Cross entropy Loss
         upsc_rz = tf.reshape(upscore,     (-1, opt.num_classes))
@@ -162,11 +161,10 @@ class FCN16s(object):
         # Upscore-2
         with tf.variable_scope('upscore_2'):
             upscore_2 = slim.conv2d_transpose(score_fr, opt.num_classes, [4, 4],
-                                  stride=2, activation_fn=None, padding='SAME',
+                                  stride=2, activation_fn=None, padding='VALID',
                                   weights_initializer=bilinear_init_1,
                                   biases_initializer=None,
                                   trainable=True, scope=None)
-            upscore_2 = upscore_2[:, 1:, 1:, :] # Crop to match pool-4 shape
         # Score-pool4 layer
         with tf.variable_scope('score_pool4'):
             score_pool4 = slim.conv2d(pool_4, opt.num_classes, [1, 1], stride=1,
@@ -174,6 +172,8 @@ class FCN16s(object):
                                       weights_initializer=tf.zeros_initializer(),
                                       biases_initializer=tf.zeros_initializer(),
                                       trainable=True, scope=None)
+        # Crop to match pool-4 shape
+        upscore_2 = upscore_2[:, 3:, 3:, :]
         # Fuse-pool4 layer
         fuse_pool4 = tf.add(upscore_2, score_pool4, name='fuse_pool4')
         # Upsample
