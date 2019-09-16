@@ -309,6 +309,7 @@ class FCN32s(object):
                 if i%opt.print_every == 0:
                     print('Epoch Completion..{%d/%d} and loss = %d' % (i, n_iters_per_epoch, curr_loss/n_iters_per_epoch))
     #---------------------------------------------------------------------------
+    
     def test(self):
         opt = self.opt
         # Checkpoint_path

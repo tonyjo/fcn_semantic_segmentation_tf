@@ -327,7 +327,7 @@ class FCN8s(object):
             # Load FCN32s weights
             if opt.reload_skip_model:
                 if opt.reload_ckpt_file is None:
-                    print('Enter a valid FCN32s checkpoint file')
+                    print('Enter a valid FCN16s checkpoint file')
                 else:
                     load_model = os.path.join(reld_dir_path, opt.reload_ckpt_file)
                     reloader.restore(sess, load_model)
@@ -400,11 +400,11 @@ class FCN8s(object):
                         # Save
                         if final_accuracy > best_acc:
                             best_acc   = final_accuracy
-                            model_name = 'fcn16s_bp_' + str(step)
+                            model_name = 'fcn8s_bp_' + str(step)
                             checkpoint_path = os.path.join(ckpt_dir_path, model_name)
                             saver_px.save(sess, checkpoint_path)
                         else:
-                            model_name = 'fcn16s_' + str(step)
+                            model_name = 'fcn8s_' + str(step)
                             checkpoint_path = os.path.join(spht_dir_path, model_name)
                             snapshot.save(sess, checkpoint_path)
                         print("Intermediate file saved")
@@ -414,6 +414,7 @@ class FCN8s(object):
                 if i%opt.print_every == 0:
                     print('Epoch Completion..{%d/%d} and loss = %d' % (i, n_iters_per_epoch, curr_loss/n_iters_per_epoch))
     #---------------------------------------------------------------------------
+
     def test(self):
         opt = self.opt
         # Checkpoint_path
