@@ -9,6 +9,7 @@ import numpy as np
 import tensorflow as tf
 from model_fcn32s import FCN32s
 from model_fcn16s import FCN16s
+from model_fcn8s import FCN8s
 
 pp = pprint.PrettyPrinter(indent=1)
 #-------------------------------------------------------------------------------
@@ -94,6 +95,9 @@ def main(_):
         fcn.train()
     if FLAGS.train_model == 'model2':
         fcn = FCN16s(FLAGS)
+        fcn.train()
+    if FLAGS.train_model == 'model3':
+        fcn = FCN8s(FLAGS)
         fcn.train()
 
 if __name__ == '__main__':
