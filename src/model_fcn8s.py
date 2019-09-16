@@ -92,7 +92,7 @@ class FCN8s(object):
         with tf.variable_scope('upscore_8'):
             upscore = slim.conv2d_transpose(fuse_pool3, opt.num_classes, [16, 16],
                                   stride=8, activation_fn=None, padding='SAME',
-                                  weights_initializer=bilinear_init_2,
+                                  weights_initializer=bilinear_init_3,
                                   biases_initializer=None,
                                   trainable=False, scope=None)
             upscore = upscore[:, 19: (19 + 224), 19: (19 + 224), :] # Crop to match input
@@ -224,11 +224,11 @@ class FCN8s(object):
         with tf.variable_scope('upscore_8'):
             upscore = slim.conv2d_transpose(fuse_pool3, opt.num_classes, [16, 16],
                                   stride=8, activation_fn=None, padding='SAME',
-                                  weights_initializer=bilinear_init_2,
+                                  weights_initializer=bilinear_init_3,
                                   biases_initializer=None,
                                   trainable=False, scope=None)
             upscore = upscore[:, 19: (19 + 224), 19: (19 + 224), :] # Crop to match input
-        
+
         # Assuming input image is float32
         upscore = tf.reshape(upscore, (-1, opt.num_classes))
         upscore = tf.nn.softmax(upscore)
@@ -296,123 +296,123 @@ class FCN8s(object):
         self.build_train_graph(l_rate_decay_step=l_rate_decay_step)
         self.pixel_acc()
 
-        # # Setup loss scalars
-        # tf.summary.scalar("Loss", self.loss)
-        # # Predictions
-        # tf.summary.image("Ground_truth", self.deprocess_pred(self.labels),  max_outputs=4)
-        # tf.summary.image("Prediction",   self.deprocess_pred(self.upscore), max_outputs=4)
-        #
-        # # Merge all summaries into a single "operation"
-        # summary_op = tf.summary.merge_all()
-        #
-        # # Set GPU options
-        # config = tf.GPUOptions(allow_growth=True)
-        #
-        # # To save model
-        # init_op  = tf.group(tf.global_variables_initializer(),\
-        #                     tf.local_variables_initializer())
-        # saver_px = tf.train.Saver(max_to_keep=1)
-        # snapshot = tf.train.Saver(max_to_keep=5)
-        # reloader = tf.train.Saver(self.all_32s_var_list)
-        #
-        # with tf.Session(config=tf.ConfigProto(gpu_options=config)) as sess:
-        #     # create log writer object
-        #     writer1 = tf.summary.FileWriter(opt.logs_path, graph=sess.graph)
-        #     writer2 = tf.summary.FileWriter(opt.logs_path + '/test_summary', graph=sess.graph)
-        #     # Intialize the graph
-        #     sess.run(init_op)
-        #     # Load the pre-trainined googlenet weights
-        #     self.vgg_net.load('./imagenet_weights/vgg16.npy', sess)
-        #     print('Pre-trainined VGG weights loaded')
-        #     # Load FCN32s weights
-        #     if opt.reload_skip_model:
-        #         if opt.reload_ckpt_file is None:
-        #             print('Enter a valid FCN32s checkpoint file')
-        #         else:
-        #             load_model = os.path.join(reld_dir_path, opt.reload_ckpt_file)
-        #             reloader.restore(sess, load_model)
-        #             sess.run(tf.assign(self.global_step, opt.global_step))
-        #             print("FCN32s weights reloaded: %s" % opt.reload_ckpt_file)
-        #     # Check if training has to be continued
-        #     if opt.continue_train:
-        #         if opt.init_checkpoint_file is None:
-        #             print('Enter a valid checkpoint file')
-        #         else:
-        #             load_model = os.path.join(ckpt_dir_path, opt.init_checkpoint_file)
-        #             saver_px.restore(sess, load_model)
-        #             sess.run(tf.assign(self.global_step, opt.global_step))
-        #             print("Resume training from previous checkpoint: %s" % opt.init_checkpoint_file)
-        #     # Begin training
-        #     step = 0
-        #     gradients = []
-        #     for epoch in range(opt.epochs):
-        #         print('Epoch {}/{}'.format(epoch, opt.epochs))
-        #         print('-' * 20)
-        #         curr_loss = 0.0
-        #         for i in range(n_iters_per_epoch):
-        #             image_batch, label_batch = next(train_gen)
-        #             feed = {self.images: image_batch,
-        #                     self.labels: label_batch,
-        #                     self.vgg_net.keep_prob: 0.5}
-        #             if opt.average_gradients == 1:
-        #                 _, l, _ = sess.run([self.train_op, self.loss, self.incr_glbl_stp], feed_dict=feed)
-        #             else:
-        #                 grads, l, _ = sess.run([self.grad_op, self.loss, self.incr_glbl_stp], feed_dict=feed)
-        #                 gradients.append(grads)
-        #                 if len(gradients) == opt.average_gradients:
-        #                     for i, placeholder in enumerate(self.grad_placeholders):
-        #                         feed[placeholder] = np.stack([g[i] for g in gradients], axis=0).mean(axis=0)
-        #                     sess.run(self.train_op, feed_dict=feed)
-        #                     gradients = [] # reset gradients
-        #             # Accumlate Loss
-        #             curr_loss += l
-        #             # Run logs
-        #             if step % opt.summary_freq == 0:
-        #                 # Print global step
-        #                 run_global_step = sess.run([self.global_step])
-        #                 # Estimate loss at global time step
-        #                 interm_loss = sess.run(summary_op, feed_dict=feed)
-        #                 print('Global Step:' + str(run_global_step))
-        #                 # Write log
-        #                 writer1.add_summary(interm_loss, step)
-        #             # Run testing
-        #             if step % opt.testing_freq == 0:
-        #                 # Validation Accuracy
-        #                 print('Estimating Testing Accuracy....')
-        #                 total_acc = 0.0
-        #                 total_steps = test_loader.max_steps//opt.test_batch_size
-        #                 for j in range(total_steps):
-        #                     val_images, val_labels = next(test_gen)
-        #                     feed = {self.images: val_images,
-        #                             self.labels: val_labels,
-        #                             self.vgg_net.keep_prob: 1.0}
-        #                     acc = sess.run(self.px_acc, feed_dict=feed)
-        #                     total_acc += acc
-        #                     if j%200 == 0:
-        #                       print('Completion {}/{}'.format(j, total_steps))
-        #                 # Final accuracy
-        #                 final_accuracy = (total_acc/total_steps) * 100
-        #                 print('Pixel Accuracy: ', final_accuracy)
-        #                 # Log tensorboard test summary
-        #                 test_summ_op = sess.run(summary_op, feed_dict=feed)
-        #                 # Write log
-        #                 writer2.add_summary(test_summ_op, step)
-        #                 # Save
-        #                 if final_accuracy > best_acc:
-        #                     best_acc   = final_accuracy
-        #                     model_name = 'fcn16s_bp_' + str(step)
-        #                     checkpoint_path = os.path.join(ckpt_dir_path, model_name)
-        #                     saver_px.save(sess, checkpoint_path)
-        #                 else:
-        #                     model_name = 'fcn16s_' + str(step)
-        #                     checkpoint_path = os.path.join(spht_dir_path, model_name)
-        #                     snapshot.save(sess, checkpoint_path)
-        #                 print("Intermediate file saved")
-        #             # Increment step
-        #             step += 1
-        #         # Print Progress
-        #         if i%opt.print_every == 0:
-        #             print('Epoch Completion..{%d/%d} and loss = %d' % (i, n_iters_per_epoch, curr_loss/n_iters_per_epoch))
+        # Setup loss scalars
+        tf.summary.scalar("Loss", self.loss)
+        # Predictions
+        tf.summary.image("Ground_truth", self.deprocess_pred(self.labels),  max_outputs=4)
+        tf.summary.image("Prediction",   self.deprocess_pred(self.upscore), max_outputs=4)
+
+        # Merge all summaries into a single "operation"
+        summary_op = tf.summary.merge_all()
+
+        # Set GPU options
+        config = tf.GPUOptions(allow_growth=True)
+
+        # To save model
+        init_op  = tf.group(tf.global_variables_initializer(),\
+                            tf.local_variables_initializer())
+        saver_px = tf.train.Saver(max_to_keep=1)
+        snapshot = tf.train.Saver(max_to_keep=5)
+        reloader = tf.train.Saver(self.all_32s_var_list)
+
+        with tf.Session(config=tf.ConfigProto(gpu_options=config)) as sess:
+            # create log writer object
+            writer1 = tf.summary.FileWriter(opt.logs_path, graph=sess.graph)
+            writer2 = tf.summary.FileWriter(opt.logs_path + '/test_summary', graph=sess.graph)
+            # Intialize the graph
+            sess.run(init_op)
+            # Load the pre-trainined googlenet weights
+            self.vgg_net.load('./imagenet_weights/vgg16.npy', sess)
+            print('Pre-trainined VGG weights loaded')
+            # Load FCN32s weights
+            if opt.reload_skip_model:
+                if opt.reload_ckpt_file is None:
+                    print('Enter a valid FCN32s checkpoint file')
+                else:
+                    load_model = os.path.join(reld_dir_path, opt.reload_ckpt_file)
+                    reloader.restore(sess, load_model)
+                    sess.run(tf.assign(self.global_step, opt.global_step))
+                    print("FCN32s weights reloaded: %s" % opt.reload_ckpt_file)
+            # Check if training has to be continued
+            if opt.continue_train:
+                if opt.init_checkpoint_file is None:
+                    print('Enter a valid checkpoint file')
+                else:
+                    load_model = os.path.join(ckpt_dir_path, opt.init_checkpoint_file)
+                    saver_px.restore(sess, load_model)
+                    sess.run(tf.assign(self.global_step, opt.global_step))
+                    print("Resume training from previous checkpoint: %s" % opt.init_checkpoint_file)
+            # Begin training
+            step = 0
+            gradients = []
+            for epoch in range(opt.epochs):
+                print('Epoch {}/{}'.format(epoch, opt.epochs))
+                print('-' * 20)
+                curr_loss = 0.0
+                for i in range(n_iters_per_epoch):
+                    image_batch, label_batch = next(train_gen)
+                    feed = {self.images: image_batch,
+                            self.labels: label_batch,
+                            self.vgg_net.keep_prob: 0.5}
+                    if opt.average_gradients == 1:
+                        _, l, _ = sess.run([self.train_op, self.loss, self.incr_glbl_stp], feed_dict=feed)
+                    else:
+                        grads, l, _ = sess.run([self.grad_op, self.loss, self.incr_glbl_stp], feed_dict=feed)
+                        gradients.append(grads)
+                        if len(gradients) == opt.average_gradients:
+                            for i, placeholder in enumerate(self.grad_placeholders):
+                                feed[placeholder] = np.stack([g[i] for g in gradients], axis=0).mean(axis=0)
+                            sess.run(self.train_op, feed_dict=feed)
+                            gradients = [] # reset gradients
+                    # Accumlate Loss
+                    curr_loss += l
+                    # Run logs
+                    if step % opt.summary_freq == 0:
+                        # Print global step
+                        run_global_step = sess.run([self.global_step])
+                        # Estimate loss at global time step
+                        interm_loss = sess.run(summary_op, feed_dict=feed)
+                        print('Global Step:' + str(run_global_step))
+                        # Write log
+                        writer1.add_summary(interm_loss, step)
+                    # Run testing
+                    if step % opt.testing_freq == 0:
+                        # Validation Accuracy
+                        print('Estimating Testing Accuracy....')
+                        total_acc = 0.0
+                        total_steps = test_loader.max_steps//opt.test_batch_size
+                        for j in range(total_steps):
+                            val_images, val_labels = next(test_gen)
+                            feed = {self.images: val_images,
+                                    self.labels: val_labels,
+                                    self.vgg_net.keep_prob: 1.0}
+                            acc = sess.run(self.px_acc, feed_dict=feed)
+                            total_acc += acc
+                            if j%200 == 0:
+                              print('Completion {}/{}'.format(j, total_steps))
+                        # Final accuracy
+                        final_accuracy = (total_acc/total_steps) * 100
+                        print('Pixel Accuracy: ', final_accuracy)
+                        # Log tensorboard test summary
+                        test_summ_op = sess.run(summary_op, feed_dict=feed)
+                        # Write log
+                        writer2.add_summary(test_summ_op, step)
+                        # Save
+                        if final_accuracy > best_acc:
+                            best_acc   = final_accuracy
+                            model_name = 'fcn16s_bp_' + str(step)
+                            checkpoint_path = os.path.join(ckpt_dir_path, model_name)
+                            saver_px.save(sess, checkpoint_path)
+                        else:
+                            model_name = 'fcn16s_' + str(step)
+                            checkpoint_path = os.path.join(spht_dir_path, model_name)
+                            snapshot.save(sess, checkpoint_path)
+                        print("Intermediate file saved")
+                    # Increment step
+                    step += 1
+                # Print Progress
+                if i%opt.print_every == 0:
+                    print('Epoch Completion..{%d/%d} and loss = %d' % (i, n_iters_per_epoch, curr_loss/n_iters_per_epoch))
     #---------------------------------------------------------------------------
     def test(self):
         opt = self.opt
