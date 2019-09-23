@@ -9,7 +9,7 @@ import numpy as np
 import tensorflow as tf
 from model_fcn32s import FCN32s
 from model_fcn16s import FCN16s
-from model_fcn8s import FCN8s
+from model_fcn8s  import FCN8s
 
 pp = pprint.PrettyPrinter(indent=1)
 #-------------------------------------------------------------------------------

@@ -23,9 +23,11 @@ Once the dataset is obtained, the model properties can be configured in config_f
 ```
 config_files
   │ config_fcn16s_train.yaml
-  | config_fcn32s_train.yaml    
+  | config_fcn32s_train.yaml
+  | config_fcn8s_train.yaml    
 ```
 and then run the following command:
+
 ```bash
 ./run0.sh config_files/config_fcn32s_train.yaml
 ```
@@ -33,18 +35,29 @@ or
 ```bash
 ./run0.sh config_files/config_fcn16s_train.yaml
 ```
+or
+```bash
+./run0.sh config_files/config_fcn16s_train.yaml
+```
+### Testing
 
-### Results
-Coming Soon.
+```bash
+./run0_test.sh config_files/config_fcn32s_test.yaml
+```
+or
+```bash
+./run0_test.sh config_files/config_fcn16s_test.yaml
+```
+or
+```bash
+./run0_test.sh config_files/config_fcn16s_test.yaml
+```
 
-| Model  | Pixel Acc. | Mean Acc. | Mean IU | f.w. IU |
-|--------|:----------:|:---------:|:-------:|:-------:|
-|FCN-32s |     -      |    -      |    -    |     -   |
-|FCN-16s |     -      |    -      |    -    |     -   |
-|FCN-8s  |     -      |    -      |    -    |     -   | 
-
-### To-Do
-FCN-8s model
+### Visualization
+```bash
+jupyter notebook
+  │evaluate_and_viz.ipynb
+```
 
 #### Paper citation
 ```

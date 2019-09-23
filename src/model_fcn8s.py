@@ -219,7 +219,6 @@ class FCN8s(object):
         upscore_4 = upscore_4[:, 3:, 3:, :]
         # Fuse-pool4 layer
         fuse_pool3 = tf.add(upscore_4, score_pool3, name='fuse_pool3')
-
         # Upsample
         with tf.variable_scope('upscore_8'):
             upscore = slim.conv2d_transpose(fuse_pool3, opt.num_classes, [16, 16],
